@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Misi IMEI Episode 3 — HP Baru, Sinyal Hilang</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#05070d;font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:#fff;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none}
+#app{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#stage{position:relative;width:min(100vw,133.333vh);height:min(100vh,75vw);overflow:hidden;overflow:clip;background:#000;container-type:size}
+button{font-family:inherit;cursor:pointer}
+.layer{position:absolute;inset:0}
+.hidden{display:none!important}
+
+/* background */
+.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s}
+.bg.on{opacity:1}
+
+/* sprite */
+#sprite{position:absolute;bottom:0;left:50%;height:86%;transform:translateX(-50%) translateY(3%);opacity:0;transition:opacity .35s,transform .35s;pointer-events:none;filter:drop-shadow(0 0 1.2cqw rgba(0,0,0,.45))}
+#sprite.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* location tag */
+#loc{position:absolute;left:1.5cqw;top:1.5cqw;z-index:7;background:rgba(10,20,45,.78);border-left:.5cqw solid #f2b705;padding:.7cqw 1.4cqw;font-size:1.5cqw;border-radius:.4cqw;max-width:55cqw;transition:opacity .4s}
+
+/* HUD */
+#hud{position:absolute;right:1.5cqw;top:1.5cqw;z-index:7;display:flex;gap:.8cqw}
+.hudbtn{background:rgba(10,20,45,.85);color:#fff;border:.15cqw solid #f2b705;border-radius:5cqw;padding:.7cqw 1.4cqw;font-size:1.45cqw;font-weight:600;display:flex;align-items:center;gap:.5cqw}
+.hudbtn:hover{background:#0d2a63}
+.hudbtn.glow{animation:glow 1.4s infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(242,183,5,.8)}50%{box-shadow:0 0 0 .8cqw rgba(242,183,5,0)}}
+
+/* mission banner */
+#mission{position:absolute;left:50%;top:7.5cqw;transform:translateX(-50%);z-index:6;background:linear-gradient(90deg,#0b3d91,#1660c9);border:.2cqw solid #f2b705;border-radius:1cqw;padding:.9cqw 2cqw;font-size:1.7cqw;font-weight:600;box-shadow:0 .5cqw 1.5cqw rgba(0,0,0,.5);max-width:80cqw;text-align:center;pointer-events:none}
+#mission b{color:#ffd54a}
+.phone-open #loc{opacity:0}
+.phone-open #mission{left:auto;right:2cqw;transform:none;max-width:52cqw;top:7.5cqw}
+
+/* nav arrows */
+#nav{position:absolute;left:0;right:0;bottom:4cqw;z-index:3;display:flex;justify-content:center;gap:2cqw;align-items:flex-end}
+.navbtn{background:rgba(255,255,255,.9);color:#0b3d91;border:.3cqw solid #0b3d91;border-radius:1.4cqw;min-width:12cqw;padding:1cqw 1.6cqw;font-size:1.7cqw;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:.3cqw;box-shadow:0 .6cqw 1.5cqw rgba(0,0,0,.45);transition:transform .15s}
+.navbtn .ic{font-size:3.6cqw;line-height:1}
+.navbtn:hover{transform:translateY(-.4cqw);background:#fff8dc}
+
+/* hotspots */
+#hotspots{z-index:2}
+.hs{position:absolute;border:.35cqw dashed rgba(255,213,74,.95);border-radius:1cqw;background:rgba(255,213,74,.12);cursor:pointer;animation:pulse 1.6s infinite}
+.hs.quiet{border-color:transparent;background:transparent;animation:none}
+.hs.quiet:hover{border-color:rgba(255,255,255,.7);background:rgba(255,255,255,.08)}
+.hs.edge .lbl{left:0;transform:none}
+.hs .lbl{position:absolute;left:50%;top:-3.4cqw;transform:translateX(-50%);white-space:nowrap;background:#f2b705;color:#0a1a3a;font-weight:700;font-size:1.5cqw;padding:.4cqw 1cqw;border-radius:.6cqw}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,213,74,.7)}50%{box-shadow:0 0 0 1.2cqw rgba(255,213,74,0)}}
+
+/* click catcher during dialogue */
+#catcher{position:absolute;inset:0;z-index:5;display:none;cursor:pointer}
+#catcher.on{display:block}
+
+/* dialog */
+#dialog{position:absolute;left:3%;right:3%;bottom:2.5%;min-height:21%;z-index:6;background:linear-gradient(180deg,rgba(8,22,55,.94),rgba(5,14,36,.96));border:.25cqw solid #f2b705;border-radius:1.4cqw;padding:2.6cqw 2.6cqw 2cqw;cursor:pointer;box-shadow:0 1cqw 3cqw rgba(0,0,0,.6)}
+.phone-open #dialog{left:44%;right:2%}
+#dname{position:absolute;top:-2.3cqw;left:2.4cqw;background:#f2b705;color:#0a1a3a;font-weight:800;font-size:1.9cqw;padding:.5cqw 1.8cqw;border-radius:.8cqw;letter-spacing:.05cqw}
+#dname.rezik{background:#4fc3f7}
+#dname.nenek{background:#c39bd3}
+#dname.narr{display:none}
+#dtext{font-size:2.15cqw;line-height:1.5;min-height:6cqw}
+#dtext.narr{font-style:italic;color:#cfe0ff}
+#dtext.think{font-style:italic;color:#d6f1ff}
+#dmore{position:absolute;right:2cqw;bottom:1cqw;font-size:1.8cqw;color:#f2b705;animation:bob 1s infinite}
+@keyframes bob{50%{transform:translateY(.4cqw)}}
+
+/* toast (inner thought warnings) */
+#toast{position:absolute;left:50%;top:13cqw;transform:translateX(-50%) scale(.9);z-index:10;background:#fff;color:#7a1010;border:.3cqw solid #d32f2f;border-radius:1.2cqw;padding:1.2cqw 2.2cqw;font-size:1.9cqw;font-weight:600;max-width:70cqw;text-align:center;opacity:0;pointer-events:none;transition:all .25s;box-shadow:0 .8cqw 2cqw rgba(0,0,0,.5)}
+#toast.on{opacity:1;transform:translateX(-50%) scale(1)}
+#toast small{display:block;color:#555;font-weight:500;font-size:1.4cqw;margin-bottom:.3cqw}
+
+/* modal */
+#modal{position:absolute;inset:0;z-index:9;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center}
+.mbox{background:linear-gradient(180deg,#0d2a63,#071a40);border:.3cqw solid #f2b705;border-radius:1.6cqw;padding:2.4cqw;width:min(70cqw,100%);max-height:88%;overflow:auto;box-shadow:0 1cqw 4cqw rgba(0,0,0,.7)}
+.phone-open .mbox{margin-left:40cqw;width:55cqw}
+.mbox h3{font-size:2.1cqw;margin-bottom:1.2cqw;color:#ffd54a}
+.mbox p{font-size:1.8cqw;line-height:1.5;margin-bottom:1.4cqw}
+.opt{display:block;width:100%;text-align:left;background:#fff;color:#0b2350;border:none;border-radius:1cqw;padding:1.2cqw 1.8cqw;font-size:1.8cqw;font-weight:600;margin:.8cqw 0;transition:transform .12s}
+.opt:hover{transform:translateX(.6cqw);background:#fff6d5}
+.opt.done{background:#dfe9f7;color:#3a5583}
+.opt.done::after{content:" ✓";color:#1b8f3a}
+.opt.alt{background:#f2b705;color:#0a1a3a;text-align:center}
+.opt.warn{background:#ffe0e0}
+
+/* video */
+#video{position:absolute;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .6s ease;pointer-events:none}
+#video.on{opacity:1;pointer-events:auto}
+#video video{width:100%;height:100%;object-fit:cover}
+#vskip{position:absolute;right:2cqw;bottom:2cqw;background:rgba(255,255,255,.15);color:#fff;border:.15cqw solid #fff;border-radius:3cqw;padding:.8cqw 1.8cqw;font-size:1.6cqw}
+#vcap{position:absolute;left:2cqw;top:2cqw;background:rgba(0,0,0,.6);border-left:.5cqw solid #f2b705;padding:.6cqw 1.4cqw;font-size:1.6cqw}
+#vplay{position:absolute;background:#f2b705;color:#0a1a3a;border:none;border-radius:5cqw;padding:1.5cqw 3cqw;font-size:2.2cqw;font-weight:800}
+
+/* black / title / end */
+#black{position:absolute;inset:0;z-index:11;background:#000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .7s}
+#black.on{opacity:1;pointer-events:auto}
+#blacktext{font-size:2.6cqw;font-style:italic;max-width:70cqw;text-align:center;line-height:1.6;color:#e6eefc}
+#end{position:absolute;inset:0;z-index:12;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#title{position:absolute;inset:0;z-index:12;overflow:hidden;background:#0b1220}
+#title .tbg{position:absolute;inset:0;background:url(assets/bg/ruangtamu.jpg) center/cover}
+#title .tshade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,18,32,.97) 0%,rgba(11,18,32,.9) 38%,rgba(11,18,32,.45) 62%,rgba(11,18,32,.1) 100%)}
+#title .tchar{position:absolute;right:3cqw;bottom:0;height:92%;filter:drop-shadow(0 0 2cqw rgba(0,0,0,.55))}
+#title .tcol{position:absolute;left:4.5cqw;top:0;bottom:0;width:46cqw;display:flex;flex-direction:column;justify-content:center;text-align:left}
+#title .teye{color:#f2b33d;font-weight:800;font-size:1.45cqw;letter-spacing:.25cqw;text-transform:uppercase;line-height:1.4}
+#title .tttl{font-size:6.4cqw;font-weight:900;line-height:1.02;margin:1.6cqw 0 1.8cqw;letter-spacing:-.15cqw}
+#title .tttl span{display:block}
+#title .tttl .red{color:#e8392f}
+#title .tdesc{font-size:1.75cqw;line-height:1.55;color:#dfe6f3;margin-bottom:2.6cqw}
+#title .tbtn{width:100%;background:#f2b33d;color:#1a1a1a;border:none;border-radius:1.2cqw;padding:1.6cqw;font-size:2.1cqw;font-weight:800;transition:transform .12s,background .12s}
+#title .tbtn:hover{background:#ffc552;transform:translateY(-.2cqw)}
+#title .credit{position:absolute;left:4.5cqw;bottom:2cqw;font-size:1.2cqw;color:#8fa0bf}
+#end{position:absolute;inset:0;z-index:12;display:flex;flex-direction:column;align-items:center;text-align:center;background:linear-gradient(180deg,rgba(4,12,32,.75),rgba(4,12,32,.95)),url(assets/bg/ruangtamu.jpg) center/cover;overflow:auto;justify-content:flex-start;padding:4cqw 0}
+.eptag{background:#f2b705;color:#0a1a3a;font-weight:800;font-size:1.7cqw;padding:.5cqw 1.8cqw;border-radius:3cqw;letter-spacing:.2cqw}
+#end h1{font-size:5cqw;margin:1.6cqw 0 .6cqw;text-shadow:0 .4cqw 1.6cqw rgba(0,0,0,.7)}
+.bigbtn{background:#f2b705;color:#0a1a3a;border:none;border-radius:5cqw;padding:1.4cqw 5cqw;font-size:2.4cqw;font-weight:800;box-shadow:0 .6cqw 0 #a87e00}
+.bigbtn:active{transform:translateY(.4cqw);box-shadow:0 .2cqw 0 #a87e00}
+.credit{position:absolute;bottom:2.5cqw;font-size:1.4cqw;color:#b9c8e6}
+.recap{background:rgba(255,255,255,.08);border:.15cqw solid rgba(242,183,5,.6);border-radius:1.4cqw;padding:2cqw 3cqw;margin:1.5cqw 0 2.5cqw;max-width:78cqw;text-align:left}
+.recap h3{color:#ffd54a;font-size:2cqw;margin-bottom:1cqw}
+.recap li{font-size:1.7cqw;line-height:1.5;margin:0 0 .6cqw 2cqw}
+.disc{font-size:1.3cqw;color:#9fb3d8;max-width:72cqw;margin-top:1.6cqw}
+
+/* ========== PHONE ========== */
+.phoneframe{position:absolute;left:5cqw;top:2.5cqw;width:33cqw;height:70cqw;background:#111;border-radius:4.5cqw;padding:1.2cqw;box-shadow:0 0 0 .35cqw #3a3a3a,0 2cqw 5cqw rgba(0,0,0,.7);transition:transform .45s cubic-bezier(.2,.9,.3,1.1),opacity .3s}
+.phoneframe.off{transform:translateY(80cqw);opacity:0;pointer-events:none}
+#phone{z-index:4}
+.pscreen{position:relative;width:100%;height:100%;background:#f4f6fb;border-radius:3.4cqw;overflow:hidden;color:#1d2433;display:flex;flex-direction:column}
+.notch{position:absolute;left:50%;top:.8cqw;transform:translateX(-50%);width:9cqw;height:2.2cqw;background:#111;border-radius:2cqw;z-index:5}
+.sbar{height:4.4cqw;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 2.6cqw .5cqw;font-size:1.3cqw;font-weight:700;color:#1d2433}
+.sbar.dark{color:#fff}
+.sbar .r{display:flex;gap:.6cqw;align-items:center}
+.nosig{color:#d32f2f}
+.pbody{flex:1;overflow:auto;position:relative}
+.pbody::-webkit-scrollbar{width:.5cqw}.pbody::-webkit-scrollbar-thumb{background:#bbb;border-radius:1cqw}
+
+/* home */
+.home{background:linear-gradient(160deg,#1a3e7a,#3b7bd4 55%,#7fb3ff);height:100%;padding:3cqw 2.4cqw;color:#fff}
+.home .clock{text-align:center;font-size:5.5cqw;font-weight:300;margin-top:2cqw}
+.home .date{text-align:center;font-size:1.5cqw;margin-bottom:5cqw;opacity:.9}
+.apps{display:grid;grid-template-columns:repeat(3,1fr);gap:2.6cqw 1cqw}
+.app{display:flex;flex-direction:column;align-items:center;gap:.6cqw;font-size:1.3cqw;background:none;border:none;color:#fff;border-radius:1.4cqw;padding:.5cqw}
+.app .ico{width:6.6cqw;height:6.6cqw;border-radius:1.8cqw;display:flex;align-items:center;justify-content:center;font-size:3.6cqw;box-shadow:0 .4cqw 1cqw rgba(0,0,0,.25)}
+.app.dim{opacity:.55}
+.tapme{position:relative;animation:tap 1.2s infinite;outline:.35cqw solid #ffd54a;outline-offset:.3cqw;border-radius:1.4cqw}
+@keyframes tap{0%,100%{outline-color:rgba(255,213,74,1)}50%{outline-color:rgba(255,213,74,.15)}}
+
+/* generic phone pages */
+.ptitle{font-size:2.2cqw;font-weight:700;padding:1.2cqw 2cqw}
+.list button{display:flex;width:100%;align-items:center;gap:1.4cqw;padding:1.3cqw 2cqw;background:#fff;border:none;border-bottom:.1cqw solid #e3e7ef;font-size:1.6cqw;text-align:left;color:#1d2433}
+.avatar{width:4.4cqw;height:4.4cqw;border-radius:50%;background:#c39bd3;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1.8cqw;flex:none}
+.call{height:100%;background:linear-gradient(180deg,#1f2a44,#0d1220);color:#fff;display:flex;flex-direction:column;align-items:center;padding-top:7cqw;text-align:center}
+.call .avatar{width:11cqw;height:11cqw;font-size:4.5cqw;margin-bottom:2cqw}
+.call .who{font-size:2.8cqw;font-weight:600}
+.call .st{font-size:1.6cqw;opacity:.85;margin-top:1cqw;min-height:2cqw}
+.call .err{margin-top:3cqw;background:rgba(211,47,47,.18);border:.15cqw solid #ef5350;color:#ffb4b4;border-radius:1.2cqw;padding:1.2cqw 1.6cqw;font-size:1.45cqw;width:80%}
+.endcall{margin-top:auto;margin-bottom:5cqw;width:7cqw;height:7cqw;border-radius:50%;background:#e53935;border:none;color:#fff;font-size:3cqw}
+
+/* search engine */
+.gigil{padding:2cqw}
+.glogo{font-size:5.2cqw;font-weight:800;text-align:center;margin:4cqw 0 2.4cqw;letter-spacing:-.2cqw}
+.glogo span:nth-child(1){color:#4285f4}.glogo span:nth-child(2){color:#ea4335}.glogo span:nth-child(3){color:#fbbc05}.glogo span:nth-child(4){color:#4285f4}.glogo span:nth-child(5){color:#34a853}
+.sbox{display:flex;align-items:center;gap:1cqw;border:.15cqw solid #ccd3e0;border-radius:4cqw;padding:1.1cqw 1.6cqw;background:#fff;font-size:1.55cqw;min-height:4.4cqw}
+.sbox .q{flex:1;color:#1d2433}
+.caret{display:inline-block;width:.15cqw;height:1.8cqw;background:#1a73e8;vertical-align:middle;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.res{padding:1.4cqw 0;border-bottom:.1cqw solid #e3e7ef}
+.res .u{font-size:1.2cqw;color:#3c7a3c;word-break:break-all}
+.res .t{font-size:1.75cqw;color:#1a0dab;font-weight:600;margin:.3cqw 0;background:none;border:none;text-align:left;padding:0}
+.res .d{font-size:1.3cqw;color:#555;line-height:1.4}
+.urlbar{flex:none;margin:0 1.4cqw .8cqw;background:#e8ebf2;border-radius:2cqw;padding:.9cqw 1.4cqw;font-size:1.25cqw;color:#333;display:flex;gap:.6cqw;align-items:center;white-space:nowrap;overflow:hidden;min-height:3.6cqw}
+.urlbar .lock{color:#1b8f3a}
+
+/* maps */
+.map{position:relative;height:30cqw;background:#e9efe4;overflow:hidden}
+.map svg{width:100%;height:100%}
+.mapres{background:#fff;padding:1.6cqw 2cqw;border-bottom:.1cqw solid #e3e7ef;width:100%;text-align:left;border-left:none;border-right:none;border-top:none;color:#1d2433}
+.mapres .n{font-size:1.75cqw;font-weight:700}
+.mapres .m{font-size:1.3cqw;color:#5f6b7a;margin-top:.3cqw}
+.mapres .star{color:#f2a100}
+.route{padding:1.6cqw 2cqw;font-size:1.4cqw;line-height:1.55}
+.route .big{font-size:2.2cqw;font-weight:700;color:#1b8f3a}
+.route ol{margin:1cqw 0 0 2.2cqw}
+
+/* FAQ page */
+.faqhead{background:#0b3d91;color:#fff;padding:1.6cqw 2cqw}
+.faqhead .k{font-size:1.15cqw;opacity:.85;letter-spacing:.1cqw}
+.faqhead h4{font-size:2cqw;margin-top:.4cqw}
+.faqsec{font-size:1.4cqw;font-weight:800;color:#0b3d91;padding:1.4cqw 2cqw .6cqw;text-transform:uppercase;letter-spacing:.08cqw}
+.faqq{background:#fff;margin:0 1.2cqw .7cqw;border-radius:1cqw;box-shadow:0 .1cqw .4cqw rgba(0,0,0,.08);overflow:hidden}
+.faqq button{width:100%;background:none;border:none;text-align:left;padding:1.2cqw 1.6cqw;font-size:1.45cqw;font-weight:600;color:#1d2433;display:flex;gap:1cqw;justify-content:space-between}
+.faqq button::after{content:"＋";color:#0b3d91;flex:none}
+.faqq.open button::after{content:"－"}
+.faqq .a{display:none;padding:0 1.6cqw 1.3cqw;font-size:1.35cqw;line-height:1.55;color:#3b4456}
+.faqq.open .a{display:block}
+.faqsrc{font-size:1.15cqw;color:#5f6b7a;padding:1.4cqw 2cqw 9cqw;line-height:1.5}
+.donebar{position:absolute;left:0;right:0;bottom:0;padding:1.4cqw 2cqw 2cqw;background:linear-gradient(180deg,rgba(244,246,251,0),#f4f6fb 35%)}
+.donebtn{width:100%;background:#1b8f3a;color:#fff;border:none;border-radius:3cqw;padding:1.3cqw;font-size:1.7cqw;font-weight:700;box-shadow:0 .4cqw 1cqw rgba(27,143,58,.4)}
+#faq{z-index:8}
+#faq .pscreen{display:flex;flex-direction:column}
+
+/* IMEI form */
+.form{padding:1.6cqw 2cqw 3cqw;background:#fff;min-height:100%}
+.form h4{text-align:center;font-size:2.2cqw;color:#424b5a;margin:1cqw 0 .6cqw}
+.form .intro{text-align:center;font-size:1.15cqw;color:#555;margin-bottom:1.6cqw}
+.fsec{font-size:1.55cqw;color:#424b5a;border-bottom:.15cqw dotted #c7ccd6;padding-bottom:.4cqw;margin:2cqw 0 1cqw;position:relative}
+.fsec::after{content:"";position:absolute;left:0;bottom:-.15cqw;width:9cqw;height:.25cqw;background:#5cb85c}
+.fsub{font-size:1.75cqw;color:#424b5a;margin:1.2cqw 0 .4cqw}
+.fld{margin-bottom:1.1cqw}
+.fld label{display:block;font-size:1.1cqw;color:#6b7280;margin-bottom:.2cqw}
+.fld .row{display:flex;gap:.8cqw;align-items:center}
+.fld input,.fld select{flex:1;min-width:0;border:none;border-bottom:.15cqw solid #c7ccd6;font-size:1.45cqw;padding:.5cqw .2cqw;background:transparent;color:#1d2433;font-family:inherit;outline:none}
+.fld input:focus{border-bottom-color:#1a73e8}
+.fld input.ok{border-bottom-color:#5cb85c}
+.fld input.bad{border-bottom-color:#e53935;background:#fff1f1}
+.auto{flex:none;background:#fff3cd;border:.12cqw solid #f2b705;color:#7a5600;border-radius:2cqw;padding:.45cqw 1cqw;font-size:1.15cqw;font-weight:700}
+.auto.done{background:#e3f4e6;border-color:#5cb85c;color:#2e7d32}
+.auto.q{background:#e3efff;border-color:#1a73e8;color:#0b3d91}
+.locked{position:relative;opacity:.55;pointer-events:none}
+.lockmsg{background:#eef1f6;color:#4b5565;font-size:1.2cqw;border-radius:1cqw;padding:1cqw 1.4cqw;margin:.6cqw 0 1cqw;text-align:center}
+.captcha{display:flex;align-items:center;gap:1cqw;margin:.8cqw 0}
+.captcha canvas{width:14cqw;height:4.2cqw;border-radius:.6cqw;border:.12cqw solid #c7ccd6}
+.chk{display:flex;gap:1cqw;align-items:flex-start;font-size:1.25cqw;color:#424b5a;line-height:1.4;margin:1cqw 0}
+.chk input{width:2cqw;height:2cqw;flex:none;margin-top:.2cqw}
+.submit{width:100%;background:#4285f4;color:#fff;border:none;border-radius:.8cqw;padding:1.3cqw;font-size:1.6cqw;font-weight:700;margin-top:1.4cqw}
+.qrpage{padding:3cqw 2.4cqw;text-align:center;background:#fff;min-height:100%}
+.qrpage .okic{width:7cqw;height:7cqw;border-radius:50%;background:#5cb85c;color:#fff;font-size:4cqw;display:flex;align-items:center;justify-content:center;margin:1cqw auto 1.4cqw}
+.qrpage h4{font-size:2.1cqw;color:#2e3a4d}
+.qrpage p{font-size:1.3cqw;color:#5f6b7a;margin:.8cqw 0 1.6cqw;line-height:1.5}
+.qrpage canvas{width:20cqw;height:20cqw;image-rendering:pixelated;border:.8cqw solid #fff;box-shadow:0 0 0 .15cqw #d6dbe5}
+.token{margin-top:1.4cqw;font-family:Consolas,monospace;font-size:1.9cqw;font-weight:700;letter-spacing:.25cqw;color:#0b3d91;background:#eef4ff;border-radius:1cqw;padding:1cqw}
+
+/* dialer */
+.dialer{height:100%;background:#fff;display:flex;flex-direction:column;align-items:center;padding-top:3cqw}
+.dnum{font-size:3.6cqw;min-height:5cqw;letter-spacing:.3cqw;color:#1d2433;margin-bottom:1.4cqw}
+.keys{display:grid;grid-template-columns:repeat(3,7.2cqw);gap:1.2cqw 2cqw}
+.key{width:7.2cqw;height:7.2cqw;border-radius:50%;background:#eef1f6;border:none;font-size:2.8cqw;color:#1d2433;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.key small{font-size:.9cqw;color:#7a8394;letter-spacing:.1cqw}
+.key.hint{background:#fff3cd;box-shadow:0 0 0 .3cqw #f2b705}
+.dialhelp{font-size:1.25cqw;color:#5f6b7a;margin-top:1.6cqw;text-align:center;padding:0 2cqw}
+.imeibox{position:absolute;left:2cqw;right:2cqw;top:22cqw;background:#fff;border-radius:1.6cqw;box-shadow:0 1cqw 3cqw rgba(0,0,0,.35);padding:2cqw;font-size:1.4cqw;color:#2e3a4d;z-index:3}
+.imeibox h5{font-size:1.8cqw;margin-bottom:1cqw}
+.imeibox .v{font-family:Consolas,monospace;font-size:1.8cqw;font-weight:700;color:#0b3d91;letter-spacing:.15cqw;margin:.2cqw 0 1cqw}
+.pbtn{background:#1a73e8;color:#fff;border:none;border-radius:2cqw;padding:1cqw 2cqw;font-size:1.45cqw;font-weight:700;width:100%;margin-top:.6cqw}
+
+/* documents tray (serah dokumen) */
+.tray{display:grid;grid-template-columns:repeat(4,1fr);gap:1.4cqw;margin:1cqw 0 1.6cqw}
+.item{background:#fff;color:#0b2350;border:.3cqw solid transparent;border-radius:1.2cqw;padding:1.4cqw .6cqw;font-size:1.45cqw;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:.6cqw}
+.item .e{font-size:4cqw}
+.item.sel{border-color:#2e7d32;background:#e8f6ea}
+.item.sel::after{content:"✓ diserahkan";font-size:1.1cqw;color:#2e7d32}
+.item.no{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-.6cqw)}75%{transform:translateX(.6cqw)}}
+
+/* queue ticket */
+.ticket{background:#fff;color:#222;width:30cqw;margin:0 auto 1.6cqw;border-radius:.6cqw;padding:2cqw;text-align:center;font-family:Consolas,monospace;box-shadow:0 1cqw 2cqw rgba(0,0,0,.4)}
+.ticket .k{font-size:1.3cqw}
+.ticket .n{font-size:8cqw;font-weight:800;line-height:1.1;margin:1cqw 0}
+.ticket .s{font-size:1.6cqw;font-weight:700}
+
+/* billing */
+.bill{background:#fffdf6;color:#222;border-radius:1cqw;padding:2.4cqw 2.8cqw;font-size:1.55cqw;box-shadow:0 1cqw 3cqw rgba(0,0,0,.5);position:relative;overflow:hidden}
+.bill::before{content:"SIMULASI";position:absolute;right:-4cqw;top:3cqw;transform:rotate(30deg);font-size:5cqw;font-weight:900;color:rgba(211,47,47,.13);letter-spacing:.5cqw}
+.bill h3{color:#0b3d91;font-size:2.1cqw;text-align:center;margin-bottom:.4cqw}
+.bill .sub{text-align:center;font-size:1.25cqw;color:#666;margin-bottom:1.6cqw}
+.bill table{width:100%;border-collapse:collapse}
+.bill td{padding:.6cqw .4cqw;border-bottom:.1cqw dashed #ccc;vertical-align:top}
+.bill td.r{text-align:right;white-space:nowrap;font-family:Consolas,monospace}
+.bill tr.tot td{font-weight:800;font-size:1.8cqw;border-top:.25cqw solid #0b3d91;border-bottom:none;color:#0b3d91}
+.bill .f{font-size:1.15cqw;color:#666}
+.bill .note{font-size:1.2cqw;color:#7a1010;background:#fff1f1;border-radius:.8cqw;padding:1cqw 1.2cqw;margin-top:1.4cqw;line-height:1.45}
+
+/* map panel */
+#mapPanel{position:absolute;left:1.5cqw;top:6.5cqw;z-index:8;width:30cqw;background:#fff;color:#1d2433;border-radius:1.4cqw;box-shadow:0 1cqw 3cqw rgba(0,0,0,.5);overflow:hidden}
+#mapPanel .h{background:#1b8f3a;color:#fff;padding:1cqw 1.6cqw;font-size:1.6cqw;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+#mapPanel .h button{background:none;border:none;color:#fff;font-size:2cqw}
+#mapPanel ol{list-style:none;padding:1cqw 1.4cqw 1.4cqw}
+#mapPanel li{font-size:1.4cqw;padding:.55cqw .8cqw;border-radius:.7cqw;display:flex;gap:.8cqw;color:#6b7280}
+#mapPanel li.done{color:#9aa3b2;text-decoration:line-through}
+#mapPanel li.cur{background:#e8f6ea;color:#1b5e20;font-weight:700}
+
+/* rotate hint */
+#rotate{position:fixed;inset:0;z-index:20;background:#05070d;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:24px;font-size:16px}
+#rotate .ph{font-size:56px;animation:rot 2s infinite}
+@keyframes rot{50%{transform:rotate(90deg)}}
+#rotate button{background:#f2b705;color:#0a1a3a;border:none;border-radius:30px;padding:10px 22px;font-weight:700;font-size:15px}
+@media (orientation:portrait) and (max-width:820px){#rotate.show{display:flex}}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="stage">
+  <img class="bg" id="bgA" alt=""><img class="bg" id="bgB" alt="">
+  <img id="sprite" alt="">
+  <div class="layer" id="hotspots"></div>
+  <div id="nav"></div>
+  <div id="loc" class="hidden"></div>
+  <div id="hud" class="hidden">
+    <button class="hudbtn hidden" id="btnMap">🗺️ Peta</button>
+    <button class="hudbtn hidden" id="btnFaq">📋 Ketentuan IMEI</button>
+    <button class="hudbtn" id="btnSnd" title="Suara">🔊</button>
+    <button class="hudbtn" id="btnFull" title="Layar penuh">⛶</button>
+  </div>
+  <div id="mission" class="hidden"></div>
+
+  <!-- phone -->
+  <div id="phone" class="phoneframe off"><div class="pscreen"><div class="notch"></div>
+    <div class="sbar" id="psbar"></div><div class="pbody" id="pbody"></div></div></div>
+
+  <div id="catcher"></div>
+  <div id="dialog" class="hidden"><div id="dname"></div><div id="dtext"></div><div id="dmore">▼</div></div>
+
+  <!-- faq overlay (phone-shaped) -->
+  <div id="faq" class="phoneframe off"><div class="pscreen"><div class="notch"></div>
+    <div class="sbar" id="fsbar"></div>
+    <div class="urlbar"><span class="lock">🔒</span><span>beacukai.go.id/faq-impor-registrasi-imei</span></div>
+    <div class="pbody" id="faqbody"></div>
+    <div class="donebar"><button class="donebtn" id="faqDone">✓ Selesai Lihat</button></div>
+  </div></div>
+
+  <div id="mapPanel" class="hidden"><div class="h"><span>🗺️ Petaku · Rute jalan kaki</span><button id="mapClose">✕</button></div><ol id="mapSteps"></ol></div>
+
+  <div id="modal" class="hidden"><div class="mbox" id="mbox"></div></div>
+  <div id="video" class="hidden"><video id="vid" playsinline preload="auto"></video><div id="vcap"></div><button id="vskip">Lewati ⏭</button><button id="vplay" class="hidden">▶ Putar video</button></div>
+  <div id="toast"></div>
+  <div id="black"><div id="blacktext"></div></div>
+
+  <div id="title">
+    <div class="tbg"></div><div class="tshade"></div>
+    <img class="tchar" id="tchar" src="assets/char/yola_salam.webp?v=5" alt="">
+    <div class="tcol">
+      <div class="teye">Episode 3 · Registrasi IMEI di Kantor Bea Cukai Terdekat</div>
+      <div class="tttl"><span>HP Baru,</span><span class="red">Sinyal Hilang</span></div>
+      <div class="tdesc">Rezik pulang dari luar negeri dan lupa mendaftarkan IMEI HP-nya di bandara. Sekarang ia tidak bisa menelepon Nenek. Bantu Rezik menemukan jalan ke Bea Cukai Belawan dan mendaftarkan IMEI-nya.</div>
+      <button class="tbtn" id="btnStart">Mulai</button>
+    </div>
+    <div class="credit">Seksi Layanan Informasi · KPPBC TMP Belawan · Simulasi edukasi</div>
+  </div>
+  <div id="end" class="hidden"></div>
+</div>
+</div>
+<div id="rotate"><div class="ph">📱</div><div>Game ini paling nyaman dimainkan dalam posisi <b>lanskap</b>.<br>Putar HP Anda.</div><button onclick="this.parentNode.classList.remove('show')">Lanjut saja</button></div>
+
+<script>
+/* =========================================================
+   KONFIGURASI CERITA (mudah diubah)
+   ========================================================= */
+const ASSET_V = 5;   // naikkan angka ini setiap gambar karakter diganti (agar browser tidak memakai versi lama)
+const TODAY = new Date('2026-11-02T00:00:00');          // tanggal di dalam cerita
+const KURS = 18000;                                      // kurs contoh (Rp per USD)
+const HARGA_USD = 800;                                   // harga HP Rezik (isi otomatis)
+let FORMDATA = {cur:'USD', value:HARGA_USD};              // diisi dari formulir pemain
+const ARRIVAL_DEFAULT = '2026-10-02T14:20';              // "sudah sebulan"
+const QUEUE_NO = 'B-10', LOKET = 7;
+
+const QNA = [
+  {q:'Berapa maksimal perangkat yang bisa saya daftarkan?',
+   a:['Total HP dan tablet yang dibawa dalam satu perjalanan dan bisa didaftarkan IMEI-nya dibatasi paling banyak 2 unit, Pak.']},
+  {q:'Apakah saya mendapat pembebasan?',
+   a:['Mohon maaf, Bapak tidak mendapat pembebasan USD 500.',
+      'Pembebasan itu hanya diberikan kalau HP diberitahukan dan didaftarkan saat Bapak masih di terminal kedatangan internasional. Karena Bapak sudah keluar dari bandara, pungutan dihitung dari seluruh harga HP.']},
+  {q:'Apa saja yang perlu saya siapkan untuk mendaftarkan IMEI?',
+   a:['Paspor, boarding pass, HP yang akan didaftarkan, invoice atau bukti pembelian jika ada, serta dokumen pendukung lainnya ya, Pak.']},
+  {q:'Berapa lama batas waktu pendaftaran sejak saya tiba dari luar negeri?',
+   a:['Paling lambat 60 hari sejak tanggal kedatangan, Pak. Lewat dari itu, IMEI sudah tidak bisa didaftarkan lagi.']},
+  {q:'Setelah terdaftar, kapan HP saya bisa dipakai menelepon dengan jaringan seluler?',
+   a:['Paling lambat 2×24 jam setelah pungutannya Bapak bayar.']},
+  {q:'Bagaimana kalau dalam 2 hari kerja HP saya belum aktif?',
+   a:['Kalau pendaftaran di Bea Cukai sudah disetujui tetapi setelah 2 hari kerja HP Bapak belum dapat sinyal, biasanya masalahnya ada di sinkronisasi data sistem.',
+      'Bapak bisa menghubungi Call Center Komdigi (dulu Kominfo) di nomor 159, atau saluran pengaduan resmi Bea Cukai, yaitu Bravo Bea Cukai 1500225.']},
+  {q:'Bagaimana kalau saya tidak punya invoice?',
+   a:['Tidak apa-apa, Pak. Pemeriksa dokumen akan menetapkan nilai HP Bapak dengan metode tertentu, misalnya berdasarkan data harga pembanding.']},
+  {q:'Apakah pendaftaran IMEI dikenakan biaya?',
+   a:['Pendaftarannya gratis, Pak. Yang perlu dibayar adalah pungutan impornya.',
+      'Bea Masuk 10% dari harga barang, lalu PPN sebesar 11/12 × 12% dari nilai impor. Nilai impor itu harga barang ditambah Bea Masuk.']},
+];
+
+const FAQ = [
+  ['Perangkat & jumlah',[
+    ['Perangkat apa saja yang wajib didaftarkan IMEI-nya?','Telepon seluler (HP), komputer genggam, dan tablet yang bisa tersambung ke jaringan seluler.'],
+    ['Berapa banyak HP yang boleh dibawa?','Jumlahnya tidak dibatasi selama untuk dipakai sendiri, bukan untuk dijual. Batas 2 unit per orang per kedatangan dalam setahun berlaku khusus untuk impor ke Kawasan Bebas dan untuk Pekerja Migran Indonesia (PMI).'],
+    ['HP lama yang saya bawa dari luar negeri juga wajib didaftarkan?','Ya, mekanismenya sama seperti HP baru, kecuali HP itu sudah pernah didaftarkan pada kedatangan sebelumnya.'],
+    ['HP yang dibeli di Indonesia perlu didaftarkan?','Tidak, karena sudah didaftarkan oleh importirnya.'],
+  ]],
+  ['Biaya & pungutan',[
+    ['Apakah pendaftaran IMEI dipungut biaya?','Pendaftarannya gratis. Namun HP bawaan dari luar negeri tetap dikenai bea masuk dan pajak impor sesuai ketentuan.'],
+    ['Berapa tarifnya untuk barang bawaan penumpang?','Bea Masuk 10% dan PPN 12% dengan dasar pengenaan 11/12 dari nilai impor. PPh impor dikecualikan. Penumpang umum mendapat pembebasan nilai USD 500, asalkan barang diberitahukan saat kedatangan (e-CD/All Indonesia atau kepada petugas).'],
+    ['Kalau saya sudah keluar dari bandara, apakah tetap dapat pembebasan USD 500?','Tidak. Pendaftaran di kantor Bea Cukai terdekat dalam 60 hari tetap bisa, tetapi bea masuk dan pajak dihitung dari seluruh nilai HP, tanpa pembebasan USD 500.'],
+  ]],
+  ['Cara & tempat pendaftaran',[
+    ['Bagaimana cara mendaftar saat tiba di Indonesia?','Beritahukan barang bawaan lewat All Indonesia, lalu daftarkan IMEI di loket terminal kedatangan atau secara daring lewat beacukai.go.id / aplikasi Mobile Beacukai.'],
+    ['Dokumen apa yang perlu disiapkan?','Bukti QR dari formulir pendaftaran, paspor, boarding pass, invoice (jika ada), dan dokumen pendukung lainnya.'],
+    ['Data apa saja yang diisi di formulir?','Nama, nomor identitas, nomor penerbangan/pelayaran, tanggal kedatangan, NPWP (jika ada), serta jenis, merek, tipe, jumlah, dan IMEI perangkat.'],
+    ['Bisakah pendaftaran diwakilkan?','Pada prinsipnya dilakukan sendiri. Perwakilan dengan surat kuasa hanya bisa jika IMEI sudah direkam dan QR berstatus perlu penelitian lanjut di kantor terdekat.'],
+  ]],
+  ['Batas waktu',[
+    ['Sampai kapan saya bisa mendaftarkan IMEI?','Idealnya saat kedatangan, sebelum keluar terminal. Jika sudah keluar, masih bisa paling lambat 60 hari sejak kedatangan di kantor Bea Cukai terdekat, tanpa fasilitas pembebasan. Lewat 60 hari, IMEI tidak dapat didaftarkan.'],
+    ['Saya salah input data. Bisa diubah?','Bisa, paling lambat 30 hari sejak pendaftaran, dengan bukti pendukung. Semua data bisa diubah kecuali jumlah, jenis, merek, dan tipe perangkat.'],
+  ]],
+  ['Setelah mendaftar',[
+    ['Bagaimana cara mengecek status IMEI?','Lewat laman Cek IMEI di situs Bea Cukai.'],
+    ['IMEI belum aktif padahal sudah bayar?','Layanan dijanjikan selesai 2×24 jam. Jika lewat, hubungi kantor Bea Cukai terdekat atau Bravo Bea Cukai 1500225. Jika status menunjukkan data sudah dikirim ke CEIR, hubungi Kementerian Perindustrian.'],
+  ]],
+];
+
+const ROUTE = ['Halte bus — belok kanan','Lurus terus','Lurus terus','Belok kanan','Lurus sampai kantor Bea Cukai Belawan','Tanya petugas di pos keamanan','Putar arah menuju Gedung Kusuma','Lurus','Masuk Gedung Kusuma'];
+
+/* =========================================================
+   UTIL
+   ========================================================= */
+const $ = s => document.querySelector(s);
+function intoView(el){const r=el.getBoundingClientRect(),p=pbody.getBoundingClientRect();pbody.scrollTop+=r.top-p.top-p.height/2+r.height/2}
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const rp = n => 'Rp' + Math.round(n).toLocaleString('id-ID');
+function luhn(base){let s=0;for(let i=0;i<base.length;i++){let d=+base[base.length-1-i];if(i%2===0){d*=2;if(d>9)d-=9}s+=d}return base+((10-s%10)%10)}
+const IMEI1 = luhn('35290611234567'), IMEI2 = luhn('35290611234568');
+
+/* ---------- sound (WebAudio, tanpa file) ---------- */
+let AC=null;
+function ac(){ if(!AC){ try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){} } return AC; }
+function tone(f,dur,when=0,vol=.12,type='sine'){if(muted)return;const c=ac();if(!c)return;const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=f;g.gain.value=0;o.connect(g);g.connect(c.destination);const t=c.currentTime+when;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.02);g.gain.setValueAtTime(vol,t+dur-.04);g.gain.linearRampToValueAtTime(0,t+dur);o.start(t);o.stop(t+dur+.02)}
+let NOISE=null;
+function noiseBuf(){const c=ac();if(!NOISE){NOISE=c.createBuffer(1,c.sampleRate*2,c.sampleRate);const d=NOISE.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}return NOISE}
+/* noise burst through a filter whose frequency sweeps f0 -> f1 */
+function noise(dur,{when=0,vol=.15,type='bandpass',f0=1000,f1=1000,q=1}={}){if(muted)return;const c=ac();if(!c)return;
+  const src=c.createBufferSource();src.buffer=noiseBuf();const fl=c.createBiquadFilter();fl.type=type;fl.Q.value=q;const g=c.createGain();
+  const t=c.currentTime+when;fl.frequency.setValueAtTime(f0,t);fl.frequency.exponentialRampToValueAtTime(f1,t+dur);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+dur*.25);g.gain.linearRampToValueAtTime(0,t+dur);
+  src.connect(fl);fl.connect(g);g.connect(c.destination);src.start(t,Math.random());src.stop(t+dur+.05)}
+/* note with pitch glide (for comedic trombone) */
+function glide(f0,f1,dur,when=0,vol=.12,type='sawtooth',lp=1200){if(muted)return;const c=ac();if(!c)return;const o=c.createOscillator(),fl=c.createBiquadFilter(),g=c.createGain();
+  o.type=type;fl.type='lowpass';fl.frequency.value=lp;const t=c.currentTime+when;o.frequency.setValueAtTime(f0,t);o.frequency.linearRampToValueAtTime(f1,t+dur);
+  const lfo=c.createOscillator(),lg=c.createGain();lfo.frequency.value=6;lg.gain.value=lp*.5;lfo.connect(lg);lg.connect(fl.frequency);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.04);g.gain.setValueAtTime(vol,t+dur-.08);g.gain.linearRampToValueAtTime(0,t+dur);
+  o.connect(fl);fl.connect(g);g.connect(c.destination);o.start(t);lfo.start(t);o.stop(t+dur+.02);lfo.stop(t+dur+.02)}
+const sfx = {
+  swooshUp(){noise(.32,{vol:.12,f0:500,f1:3500,q:.8})},
+  swooshDown(){noise(.32,{vol:.1,f0:3000,f1:450,q:.8})},
+  whoosh(){noise(.9,{vol:.08,type:'lowpass',f0:300,f1:1600,q:.5})},
+  pop(){tone(660,.06,0,.06,'triangle');tone(990,.06,.05,.05,'triangle')},
+  kiosk(){tone(1320,.07,0,.07,'square');tone(1760,.09,.08,.06,'square')},
+  printer(){for(let i=0;i<9;i++){noise(.09,{when:i*.12,vol:.09,type:'bandpass',f0:2600,f1:2400,q:3});tone(140,.08,i*.12,.03,'square')}},
+  paper(){[0,.09,.2].forEach(w=>noise(.08,{when:w,vol:.11,type:'highpass',f0:2500,f1:4000,q:.7}))},
+  door(){noise(1.1,{vol:.07,type:'lowpass',f0:250,f1:900,q:.6});tone(70,.15,1.05,.08)},
+  stamp(){tone(85,.18,0,.2);noise(.06,{vol:.15,type:'lowpass',f0:1800,f1:400})},
+  chime(){[523,659,784,1047].forEach((f,i)=>tone(f,.35,i*.1,.09,'triangle'))},
+  fanfare(){[[392,.18,0],[523,.18,.2],[659,.18,.4],[784,.6,.6],[659,.18,1.25],[784,.9,1.45]].forEach(([f,d,w])=>{tone(f,d,w,.09,'triangle');tone(f/2,d,w,.05,'sine')})},
+  wahwah(){[[311,.45,0],[294,.45,.5],[277,.45,1],[262,1.1,1.5]].forEach(([f,d,w],i)=>glide(f,i===3?247:f,d,w,.11))},
+  tap(){tone(880,.05,0,.05)},
+  fail(){tone(950,.33,0);tone(1400,.33,.35);tone(1800,.33,.7)},
+  ring(){tone(425,1,0,.1);tone(425,1,1.6,.1)},
+  ding(){tone(784,.5,0,.15,'triangle');tone(622,.8,.45,.15,'triangle')},
+  wrong(){tone(220,.18,0,.08,'square')},
+  ok(){tone(660,.1,0,.08);tone(990,.15,.1,.08)},
+  key(){tone(1209,.08,0,.06)}
+};
+
+/* ---------- musik latar & efek suara dari file ---------- */
+const BGM={rumah:'assets/audio/bgm_rumah.mp3',perjalanan:'assets/audio/bgm_perjalanan.mp3',kantor:'assets/audio/bgm_kantor.mp3',jenaka:'assets/audio/bgm_jenaka.mp3'};
+const BGM_VOL=0.28, DUCK_VOL=0.05;
+let muted=false, curBgm=null, ducked=false; const bgmEls={};
+function fadeTo(el,target,ms,after){ if(!el)return; clearInterval(el._f); const from=el.volume, t0=performance.now();
+  el._f=setInterval(()=>{const k=Math.min(1,(performance.now()-t0)/ms); el.volume=Math.max(0,Math.min(1,from+(target-from)*k)); if(k>=1){clearInterval(el._f); after&&after()}},40); }
+const bgmTarget=()=>muted?0:(ducked?DUCK_VOL:BGM_VOL);
+function playBgm(key){
+  if(curBgm===key) return;
+  const old=bgmEls[curBgm]; if(old) fadeTo(old,0,1000,()=>old.pause());
+  curBgm=key; if(!key) return;
+  let el=bgmEls[key]; if(!el){ el=new Audio(BGM[key]); el.loop=true; el.volume=0; el.onerror=()=>{}; bgmEls[key]=el; }
+  el.currentTime=0; el.play().catch(()=>{}); fadeTo(el,bgmTarget(),1400);
+}
+function duckBgm(on){ ducked=on; fadeTo(bgmEls[curBgm],bgmTarget(),400); }
+const typingSnd=new Audio('assets/audio/typing.mp3'); typingSnd.loop=true; typingSnd.volume=0.35;
+function typingOn(){ if(muted)return; try{typingSnd.currentTime=Math.random()*5}catch(e){} typingSnd.play().catch(()=>{}); }
+function typingOff(){ typingSnd.pause(); }
+/* langkah kaki santai: 3 langkah lembut, jeda pelan */
+function footsteps(){ if(muted)return; [0,.48,.96].forEach((w,i)=>{ const v=.07-i*.012;
+  noise(.11,{when:w,vol:v,type:'lowpass',f0:520,f1:260,q:.7}); tone(68,.09,w,v*.9,'sine'); }); }
+function setMuted(m){ muted=m; $('#btnSnd').textContent=m?'🔇':'🔊'; Object.values(bgmEls).forEach(e=>fadeTo(e,0,200)); if(!m && bgmEls[curBgm]) fadeTo(bgmEls[curBgm],bgmTarget(),300); if(m){typingOff()} $('#vid').muted=m; }
+
+/* =========================================================
+   STAGE: background, sprite, location
+   ========================================================= */
+let bgFront = $('#bgA'), bgBack = $('#bgB');
+function setBg(name){
+  clearToast();
+  return new Promise(res=>{
+    const src='assets/bg/'+name+'.jpg';
+    bgBack.onload=()=>{bgBack.classList.add('on');bgFront.classList.remove('on');[bgFront,bgBack]=[bgBack,bgFront];setTimeout(res,350)};
+    bgBack.onerror=res;
+    bgBack.src=src;
+  });
+}
+const sprite=$('#sprite');
+function showSprite(name){
+  if(!name){sprite.classList.remove('on');return;}
+  const src='assets/char/'+name+'.webp?v='+ASSET_V;
+  if(sprite.getAttribute('src')!==src){sprite.src=src;}
+  requestAnimationFrame(()=>sprite.classList.add('on'));
+}
+function setLoc(t){const l=$('#loc');if(!t){l.classList.add('hidden');return}l.textContent=t;l.classList.remove('hidden')}
+
+/* =========================================================
+   DIALOG
+   ========================================================= */
+const dlg=$('#dialog'), dname=$('#dname'), dtext=$('#dtext'), catcher=$('#catcher');
+let typing=null, advance=null;
+function finishTyping(){ if(typing){typing.finish();} }
+function onAdvance(){ if(typing){finishTyping();return} if(advance){sfx.tap();const a=advance;advance=null;a();} }
+dlg.addEventListener('click',onAdvance); catcher.addEventListener('click',onAdvance);
+document.addEventListener('keydown',e=>{ if((e.key===' '||e.key==='Enter') && (advance||typing)){e.preventDefault();onAdvance();} });
+
+function typeText(text){
+  return new Promise(res=>{
+    dtext.textContent=''; let i=0; const pitch=VOICE[curSpeaker]||560;
+    const iv=setInterval(()=>{ i++; dtext.textContent=text.slice(0,i);
+      if(i%3===0 && /\S/.test(text[i-1]||'')) tone(pitch*(0.96+Math.random()*0.08),.035,0,.035,'sine');
+      if(i>=text.length){done()} },22);
+    function done(){clearInterval(iv);dtext.textContent=text;typing=null;res()}
+    typing={finish:done};
+  });
+}
+const NAMECLASS={Rezik:'rezik',Nenek:'nenek'};
+/* nada 'blip' teks per tokoh (Hz) */
+const VOICE={Rezik:440,Makarov:330,Simon:370,Yola:660,Aulia:620,Nenek:520,'':500};
+let curSpeaker='';
+async function say(name,text,opt={}){
+  if('sprite' in opt) showSprite(opt.sprite);
+  dlg.classList.remove('hidden'); curSpeaker=name||'';
+  dname.textContent=name||''; dname.className=name?(NAMECLASS[name]||''):'narr';
+  dtext.className=opt.think?'think':(name?'':'narr');
+  catcher.classList.add('on');
+  await typeText(text);
+  await new Promise(r=>advance=r);
+  catcher.classList.remove('on');
+}
+const narr = (t,opt) => say('',t,opt);
+function hideDialog(){dlg.classList.add('hidden')}
+
+/* mission banner + toast */
+function mission(html){const m=$('#mission');if(!html){m.classList.add('hidden');return}m.innerHTML='🎯 '+html;m.classList.remove('hidden')}
+let toastT;
+function clearToast(){clearTimeout(toastT);$('#toast').classList.remove('on')}
+function toast(msg,who='Rezik (dalam hati)'){sfx.wrong();const t=$('#toast');t.innerHTML=(who?`<small>${who}</small>`:'')+msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2800)}
+
+/* modal choice */
+function choice(title,options,{text=''}={}){
+  return new Promise(res=>{
+    sfx.pop();
+    hideDialog();
+    const box=$('#mbox'); box.innerHTML=(title?`<h3>${title}</h3>`:'')+(text?`<p>${text}</p>`:'');
+    options.forEach((o,i)=>{const b=document.createElement('button');b.className='opt '+(o.cls||'');b.textContent=o.label;b.onclick=()=>{sfx.tap();$('#modal').classList.add('hidden');res(i)};box.appendChild(b)});
+    $('#modal').classList.remove('hidden');
+  });
+}
+function modalHTML(html,btnLabel='Lanjut'){
+  return new Promise(res=>{
+    hideDialog();
+    const box=$('#mbox'); box.innerHTML=html;
+    const b=document.createElement('button');b.className='opt alt';b.textContent=btnLabel;b.onclick=()=>{sfx.tap();$('#modal').classList.add('hidden');res()};box.appendChild(b);
+    $('#modal').classList.remove('hidden');
+  });
+}
+
+/* black screen */
+async function blackText(t,ms=2600){sfx.whoosh();const b=$('#black');$('#blacktext').textContent='';b.classList.add('on');await wait(700);$('#blacktext').textContent=t;await wait(ms);}
+async function blackOff(){$('#black').classList.remove('on');await wait(700)}
+
+/* =========================================================
+   NAVIGATION + HOTSPOTS + VIDEO
+   ========================================================= */
+const NAVDEF={forward:['⬆','Lurus'],left:['⬅','Belok kiri'],right:['➡','Belok kanan'],back:['↩','Putar arah'],enter:['🚪','Masuk']};
+let routeStep=0;
+function renderRoute(){$('#mapSteps').innerHTML=ROUTE.map((s,i)=>`<li class="${i<routeStep?'done':i===routeStep?'cur':''}">${i<routeStep?'✓':i===routeStep?'➤':'•'} ${s}</li>`).join('')}
+function nav({correct,options=['left','forward','right'],wrong='Berdasarkan peta, seharusnya saya bukan ke sini.',hotspots=[],missionText='Pilih arah yang sesuai dengan peta.',steps=true}){
+  return new Promise(res=>{
+    hideDialog(); mission(missionText);
+    const box=$('#nav'); box.innerHTML='';
+    const finish=k=>{steps?footsteps():sfx.ok(); if(k==='enter') setTimeout(()=>sfx.door(),500);box.innerHTML='';$('#hotspots').innerHTML='';mission();res(k)};
+    options.forEach(k=>{const[ic,lb]=NAVDEF[k];const b=document.createElement('button');b.className='navbtn';b.innerHTML=`<span class="ic">${ic}</span>${lb}`;
+      b.onclick=()=>k===correct?finish(k):toast(wrong);box.appendChild(b)});
+    hotspots.forEach(h=>addHotspot(h,()=>h.id===correct?finish(h.id):toast(h.wrong||wrong)));
+  });
+}
+function addHotspot(h,onclick){
+  const d=document.createElement('div');d.className='hs'+(h.quiet?' quiet':'')+(h.x<10?' edge':'');
+  Object.assign(d.style,{left:h.x+'%',top:h.y+'%',width:h.w+'%',height:h.h+'%'});
+  if(h.label)d.innerHTML=`<span class="lbl">${h.label}</span>`;
+  d.onclick=e=>{e.stopPropagation();onclick()};$('#hotspots').appendChild(d);return d;
+}
+function hotspots(list,missionText,wrongDefault){
+  return new Promise(res=>{
+    hideDialog(); mission(missionText); $('#hotspots').innerHTML='';
+    list.forEach(h=>addHotspot(h,()=>{ if(h.ok){h.steps?footsteps():sfx.ok();$('#hotspots').innerHTML='';mission();res(h.id)} else toast(h.wrong||wrongDefault) }));
+  });
+}
+function playVideo(src,caption,nextBg){
+  return new Promise(res=>{
+    hideDialog(); mission(); clearToast(); duckBgm(true);
+    const ov=$('#video'),v=$('#vid'),pb=$('#vplay');
+    $('#vcap').textContent='▶ '+caption;
+    v.src=src; v.muted=muted; v.currentTime=0; pb.classList.add('hidden');
+    ov.classList.remove('hidden');
+    let finished=false;
+    const done=async()=>{ if(finished)return; finished=true; v.onended=null;
+      if(nextBg) await setBg(nextBg);          // ganti latar di bawah video
+      ov.classList.remove('on'); duckBgm(false); await wait(650); v.pause(); ov.classList.add('hidden'); res(); };
+    v.onended=done; $('#vskip').onclick=done;
+    setTimeout(()=>{ if(!finished) ov.classList.add('on') },30);
+    v.play().catch(()=>{ if(!finished){pb.classList.remove('hidden');pb.onclick=()=>{pb.classList.add('hidden');v.play()}} });
+  });
+}
+
+/* =========================================================
+   PHONE
+   ========================================================= */
+const phoneEl=$('#phone'), pbody=$('#pbody'), psbar=$('#psbar');
+let sig='none', clock='10:00';
+function statusBar(el,dark=false){
+  const s = sig==='4g' ? '📶 <span>4G</span>' : '<span class="nosig" title="Tidak ada layanan seluler">📵</span>';
+  const w = sig==='none' ? '' : '<span>Wi‑Fi</span>';
+  el.className='sbar'+(dark?' dark':''); el.innerHTML=`<span>${clock}</span><span class="r">${s}${w}<span>🔋</span></span>`;
+}
+function phoneOpen(){sfx.swooshUp();statusBar(psbar);phoneEl.classList.remove('off');$('#stage').classList.add('phone-open');showSprite(null)}
+function phoneClose(){sfx.swooshDown();phoneEl.classList.add('off');$('#stage').classList.remove('phone-open');return wait(400)}
+function screen(html,dark=false){pbody.innerHTML=html;pbody.scrollTop=0;statusBar(psbar,dark)}
+function tap(sel,root=pbody){return new Promise(r=>{const el=root.querySelector(sel);el.classList.add('tapme');el.onclick=e=>{e.stopPropagation();sfx.tap();el.classList.remove('tapme');el.onclick=null;r(el)}})}
+async function typeInto(el,text,speed=55){el.textContent='';typingOn();for(const ch of text){el.textContent+=ch;await wait(speed)}typingOff()}
+
+const homeHTML=()=>`<div class="home"><div class="clock">${clock}</div><div class="date">Senin, 2 November 2026</div>
+  <div class="apps">
+   <button class="app" id="aPhone"><span class="ico" style="background:#34a853">📞</span>Telepon</button>
+   <button class="app" id="aGigil"><span class="ico" style="background:#fff">🔍</span>Gigil</button>
+   <button class="app" id="aMaps"><span class="ico" style="background:#fff">🗺️</span>Petaku</button>
+   <button class="app dim"><span class="ico" style="background:#25d366">💬</span>Pesan</button>
+   <button class="app dim"><span class="ico" style="background:#ff7043">📷</span>Kamera</button>
+   <button class="app dim"><span class="ico" style="background:#7e57c2">🎵</span>Musik</button>
+  </div></div>`;
+const contactsHTML=()=>`<div class="ptitle">Kontak</div><div class="list">
+  <button><span class="avatar" style="background:#4fc3f7">A</span>Andi Kantor</button>
+  <button><span class="avatar" style="background:#ff8a65">M</span>Mama</button>
+  <button id="cNenek"><span class="avatar">N</span><b>Nenek</b></button>
+  <button><span class="avatar" style="background:#81c784">R</span>Rina</button></div>`;
+const callHTML=(st)=>`<div class="call"><span class="avatar">N</span><div class="who">Nenek</div><div class="st" id="callst">${st}</div><div id="callerr"></div><button class="endcall" id="endcall">✆</button></div>`;
+const gigilHTML=()=>`<div class="gigil"><div class="glogo"><span>G</span><span>i</span><span>g</span><span>i</span><span>l</span></div>
+  <div class="sbox" id="gbox"><span>🔍</span><span class="q" id="gq"></span><span class="caret"></span></div><div id="gres" style="margin-top:1.6cqw"></div></div>`;
+
+async function phoneHome(){screen(homeHTML(),true)}
+
+/* ---------- FAQ overlay ---------- */
+function buildFAQ(){
+  let h=`<div class="faqhead"><div class="k">BEA CUKAI · FAQ</div><h4>Impor & Registrasi IMEI</h4></div>`;
+  FAQ.forEach(([sec,items])=>{h+=`<div class="faqsec">${sec}</div>`;items.forEach(([q,a])=>{h+=`<div class="faqq"><button>${q}</button><div class="a">${a}</div></div>`})});
+  h+=`<div class="faqsrc">Ringkasan disusun dari halaman FAQ Impor & Registrasi IMEI Bea Cukai (beacukai.go.id/faq-impor-registrasi-imei). Untuk kepastian aturan, rujuk laman resmi atau hubungi Bravo Bea Cukai 1500225.</div>`;
+  $('#faqbody').innerHTML=h;
+  $('#faqbody').querySelectorAll('.faqq button').forEach(b=>b.onclick=()=>{sfx.tap();b.parentNode.classList.toggle('open')});
+}
+let faqResolve=null;
+function openFAQ(){
+  sfx.swooshUp(); statusBar($('#fsbar'));
+  $('#faq').classList.remove('off'); $('#faqbody').scrollTop=0;
+  $('#btnFaq').classList.remove('glow');
+  return new Promise(r=>faqResolve=r);
+}
+$('#faqDone').onclick=()=>{sfx.ok();$('#faq').classList.add('off');if(faqResolve){const r=faqResolve;faqResolve=null;r()}};
+$('#btnFaq').onclick=()=>{sfx.tap();openFAQ()};
+
+/* map panel */
+$('#btnMap').onclick=()=>{sfx.tap();renderRoute();$('#mapPanel').classList.toggle('hidden')};
+$('#mapClose').onclick=()=>$('#mapPanel').classList.add('hidden');
+$('#btnSnd').onclick=()=>setMuted(!muted);
+$('#btnFull').onclick=()=>{try{const d=document.documentElement;let r;if(!document.fullscreenElement){r=(d.requestFullscreen||d.webkitRequestFullscreen||function(){}).call(d)}else if(document.exitFullscreen){r=document.exitFullscreen()}if(r&&r.catch)r.catch(()=>toast('Layar penuh tidak tersedia di tampilan ini.',''))}catch(e){toast('Layar penuh tidak tersedia di tampilan ini.','')}};
+
+/* =========================================================
+   FORMULIR IMEI
+   ========================================================= */
+let imeiKnown=false, captchaCode='';
+const F=[
+  {sec:'Data Diri (Personal Data)'},
+  {id:'flight',l:'No. Penerbangan/Pelayaran (Flight/Voyage Number) *',v:'GA 812',req:1},
+  {id:'arrival',l:'Waktu Kedatangan (Arrival Date) *',t:'datetime-local',v:ARRIVAL_DEFAULT,req:1},
+  {id:'idtype',l:'Jenis Identitas (Identity Type) *',t:'select',o:['PASSPORT'],v:'PASSPORT'},
+  {id:'idno',l:'Nomor Identitas (Identity Number) *',v:'C9876543',req:1},
+  {id:'name',l:'Nama Lengkap (Full Name) *',v:'REZIK',req:1},
+  {id:'nat',l:'Kewarganegaraan (Nationality) *',v:'INDONESIA',req:1},
+  {id:'npwp',l:'NPWP (Tax Number) — opsional',v:''},
+  {id:'email',l:'Email',v:'rezik@contoh.id'},
+  {sec:'List Data Barang'},{sub:'Device 1'},
+  {id:'imei1',l:'IMEI 1 *',v:IMEI1,req:1,imei:1},
+  {id:'imei2',l:'IMEI 2',v:IMEI2,imei:1},
+  {id:'brand',l:'Merk (Brand) *',v:'Samsung',req:1},
+  {id:'type',l:'Tipe (Type) *',v:'Galaxy S24',req:1},
+  {id:'ram',l:'RAM',v:'8 GB'},
+  {id:'storage',l:'Kapasitas (Storage)',v:'256 GB'},
+  {id:'color',l:'Warna (Color)',v:'Hitam'},
+  {id:'cur',l:'Mata Uang (Currency) *',t:'select',o:['Indonesian Rupiah (IDR)','US Dollar (USD)'],v:'US Dollar (USD)'},
+  {id:'value',l:'Harga Barang (Value of Goods) *',v:String(HARGA_USD),req:1},
+];
+function fieldHTML(f){
+  if(f.sec) return `<div class="fsec">${f.sec}</div>`;
+  if(f.sub) return `<div class="fsub">${f.sub}</div>`;
+  let inp;
+  if(f.t==='select') inp=`<select id="f_${f.id}">${f.o.map(o=>`<option>${o}</option>`).join('')}</select>`;
+  else inp=`<input id="f_${f.id}" type="${f.t||'text'}" ${f.imei?'inputmode="numeric" placeholder="🔒 cek nomor IMEI dulu" readonly':''} autocomplete="off">`;
+  const btn = f.v==='' ? '' : `<button class="auto ${f.imei?'q':''}" data-f="${f.id}">${f.imei?'❓ Cek IMEI':'⚡ Isi'}</button>`;
+  return `<div class="fld"><label>${f.l}</label><div class="row">${inp}${btn}</div></div>`;
+}
+function formHTML(){
+  return `<div class="form"><h4>Formulir Pendaftaran IMEI</h4><div class="intro">Formulir ini khusus untuk pendaftaran perangkat dari luar negeri yang dibawa oleh penumpang.</div>
+  ${F.map(fieldHTML).join('')}
+  <div class="fsub">Device 2</div><div class="lockmsg">🔒 Rezik hanya mendaftarkan 1 perangkat, jadi Device 2 dikosongkan.</div>
+  <div class="locked">${['IMEI 1','IMEI 2','Merk (Brand)','Tipe (Type)','Harga Barang (Value of Goods)'].map(l=>`<div class="fld"><label>${l}</label><div class="row"><input disabled></div></div>`).join('')}</div>
+  <div class="fsec">Upload Dokumen</div><div class="lockmsg" style="text-align:left">Upload Surat Karantina jika ada (opsional). Rezik tidak perlu mengunggah apa pun.</div>
+  <div class="fsec">Konfirmasi Pengiriman</div>
+  <label class="chk"><input type="checkbox" id="f_agree"><span>Data yang saya inputkan merupakan data yang benar, dan saya bertanggung jawab atas kebenarannya.</span></label>
+  <div class="fld"><label>Keycode *</label><div class="captcha"><canvas id="cap" width="140" height="42"></canvas></div><div class="row"><input id="f_key" autocomplete="off" placeholder="Ketik kode di atas"><button class="auto" data-f="key">⚡ Isi</button></div></div>
+  <button class="submit" id="fsubmit">KIRIM</button></div>`;
+}
+function readPrice(){
+  const cur=$('#f_cur').value.includes('USD')?'USD':'IDR'; let raw=($('#f_value').value||'').trim();
+  let value;
+  if(cur==='IDR') value=parseInt(raw.replace(/[^0-9]/g,''),10);        // 3.000.000 -> 3000000
+  else { raw=raw.replace(/\s/g,''); if(/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(raw)) raw=raw.replace(/\./g,'').replace(',','.'); else raw=raw.replace(',','.'); value=parseFloat(raw.replace(/[^0-9.]/g,'')); }
+  return {cur, value: isFinite(value)?value:0};
+}
+const fmtUSD=v=>'USD '+v.toLocaleString('id-ID',{maximumFractionDigits:2});
+function drawCaptcha(){
+  const ch='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';captchaCode='';for(let i=0;i<5;i++)captchaCode+=ch[Math.floor(Math.random()*ch.length)];
+  const c=$('#cap'),x=c.getContext('2d');x.fillStyle='#eef1f6';x.fillRect(0,0,140,42);
+  for(let i=0;i<6;i++){x.strokeStyle=`hsl(${Math.random()*360},50%,70%)`;x.beginPath();x.moveTo(Math.random()*140,Math.random()*42);x.lineTo(Math.random()*140,Math.random()*42);x.stroke()}
+  x.font='bold 24px Consolas,monospace';x.textBaseline='middle';
+  [...captchaCode].forEach((k,i)=>{x.save();x.translate(18+i*24,21);x.rotate((Math.random()-.5)*.5);x.fillStyle=`hsl(${210+Math.random()*40},60%,30%)`;x.fillText(k,-7,0);x.restore()});
+}
+function arrivalCheck(){
+  const v=$('#f_arrival').value; if(!v) return 'empty';
+  const d=new Date(v); const days=(TODAY - new Date(d.getFullYear(),d.getMonth(),d.getDate()))/864e5;
+  if(days<0) return 'future'; if(days>60) return 'late'; return 'ok';
+}
+async function yolaWarnArrival(state){
+  const el=$('#f_arrival'); el.classList.add('bad');
+  if(state==='late') await say('Yola','Tunggu, Pak. Tanggal kedatangan itu sudah lebih dari 60 hari dari hari ini (2 November 2026). Kalau lewat 60 hari, IMEI tidak bisa didaftarkan. Coba periksa lagi tanggalnya, ya.');
+  else await say('Yola','Hmm, tanggal kedatangannya kok setelah hari ini, Pak? Isi dengan tanggal Bapak tiba di Indonesia, ya.');
+  hideDialog();
+}
+
+/* ---------- form runner: dialer overlays the form so values stay intact ---------- */
+async function formStep(){
+  // Use a hidden container so dialer can overlay without destroying the form
+  return new Promise(resolve=>{
+    screen(`<div id="formwrap">${formHTML()}</div><div id="overlayApp" class="hidden" style="position:absolute;inset:0;background:#fff;z-index:2"></div>`);
+    drawCaptcha();
+    const setVal=(id,v)=>{const el=$('#f_'+id);el.value=v;el.classList.add('ok');el.classList.remove('bad')};
+    pbody.querySelectorAll('.auto[data-f]').forEach(b=>b.onclick=async()=>{
+      const id=b.dataset.f; sfx.tap();
+      if(id==='key'){setVal('key',captchaCode);b.classList.add('done');b.textContent='✓';return}
+      const f=F.find(x=>x.id===id);
+      if(f.imei && !imeiKnown){ await imeiDial(); pbody.querySelectorAll('.auto.q').forEach(q=>{q.classList.remove('q');q.textContent='⚡ Isi'}); pbody.querySelectorAll('input[readonly]').forEach(i=>{i.removeAttribute('readonly');i.placeholder=''}); return; }
+      setVal(id,f.v);b.classList.add('done');b.textContent='✓';
+      if(id==='arrival'){const s=arrivalCheck(); if(s!=='ok') await yolaWarnArrival(s);}
+    });
+    pbody.querySelectorAll('input[readonly]').forEach(i=>i.onclick=async()=>{ if(!imeiKnown){ pbody.querySelector(`.auto[data-f="${i.id.slice(2)}"]`).click(); } });
+    $('#f_arrival').addEventListener('change',async()=>{const s=arrivalCheck(); if(s==='ok'){$('#f_arrival').classList.add('ok');$('#f_arrival').classList.remove('bad')} else if(s!=='empty') await yolaWarnArrival(s)});
+    $('#fsubmit').onclick=async()=>{
+      sfx.tap();
+      const miss=F.filter(f=>f.req && !$('#f_'+f.id).value.trim());
+      if(miss.length){miss.forEach(f=>$('#f_'+f.id).classList.add('bad'));toast('Masih ada kolom wajib (*) yang kosong: '+miss[0].l.replace(/\s*\(.*$/,'').replace(' *',''),'Formulir');intoView($('#f_'+miss[0].id));return}
+      const s=arrivalCheck(); if(s!=='ok'){intoView($('#f_arrival'));await yolaWarnArrival(s);return}
+      if(!(readPrice().value>0)){$('#f_value').classList.add('bad');toast('Harga barang belum valid. Isi dengan angka, misalnya 3000000 atau 800.','Formulir');intoView($('#f_value'));return}
+      if(!$('#f_agree').checked){toast('Centang dulu pernyataan kebenaran data.','Formulir');intoView($('#f_agree'));return}
+      if($('#f_key').value.trim().toUpperCase()!==captchaCode){$('#f_key').classList.add('bad');toast('Keycode belum sesuai. Gunakan tombol ⚡ Isi bila perlu.','Formulir');return}
+      FORMDATA=readPrice(); $('#fsubmit').textContent='Mengirim…';mission();await wait(900);resolve();
+    };
+    mission('Isi formulir satu per satu. Tekan <b>⚡ Isi</b> untuk mengisi otomatis.');
+  });
+}
+async function imeiDial(){
+  mission();
+  await say('Rezik','Kak, nomor IMEI-nya bisa dilihat di mana, ya?');
+  await say('Yola','Ketik *#06# di aplikasi Telepon, Pak. Nanti nomor IMEI-nya muncul, lalu salin ke formulir.');
+  hideDialog();
+  const ov=$('#overlayApp'); const scrollSave=pbody.scrollTop; pbody.scrollTop=0; pbody.style.overflow='hidden';
+  ov.innerHTML=`<div class="dialer"><div class="dnum" id="dnum"></div><div class="keys">${[['1',''],['2','ABC'],['3','DEF'],['4','GHI'],['5','JKL'],['6','MNO'],['7','PQRS'],['8','TUV'],['9','WXYZ'],['*',''],['0','+'],['#','']].map(([k,s])=>`<button class="key" data-k="${k}">${k}<small>${s}</small></button>`).join('')}</div>
+    <div class="dialhelp">Ketuk tombol yang menyala: <b>* # 0 6 #</b><br><button class="auto" id="autodial" style="margin-top:1cqw">⚡ Ketik otomatis</button></div></div>`;
+  ov.classList.remove('hidden');
+  mission('Rezik membuka aplikasi Telepon. Ketik <b>*#06#</b>.');
+  const seq='*#06#'; let pos=0; const num=$('#dnum');
+  const hint=()=>ov.querySelectorAll('.key').forEach(k=>k.classList.toggle('hint',k.dataset.k===seq[pos]));hint();
+  await new Promise(res=>{
+    ov.querySelectorAll('.key').forEach(k=>k.onclick=()=>{ if(k.dataset.k===seq[pos]){sfx.key();num.textContent+=k.dataset.k;pos++;hint();if(pos===seq.length)res()} else sfx.wrong() });
+    $('#autodial').onclick=async()=>{ov.querySelectorAll('.key').forEach(k=>k.onclick=null);for(;pos<seq.length;pos++){num.textContent+=seq[pos];sfx.key();hint();await wait(220)}res()};
+  });
+  await wait(400);
+  const box=document.createElement('div');box.className='imeibox';
+  box.innerHTML=`<h5>Info perangkat</h5>IMEI 1<div class="v">${IMEI1}</div>IMEI 2<div class="v">${IMEI2}</div><button class="pbtn" id="backform">📋 Salin & kembali ke browser</button>`;
+  ov.appendChild(box); mission('Salin nomor IMEI, lalu kembali ke browser.');
+  await tap('#backform',ov);
+  imeiKnown=true; ov.classList.add('hidden'); ov.innerHTML=''; pbody.style.overflow=''; pbody.scrollTop=scrollSave;
+  mission('Sekarang kolom IMEI bisa diisi dengan <b>⚡ Isi</b>. Lanjutkan sampai <b>KIRIM</b>.');
+}
+
+function drawQR(canvas,seed){
+  const N=29,x=canvas.getContext('2d');canvas.width=N;canvas.height=N;x.fillStyle='#fff';x.fillRect(0,0,N,N);x.fillStyle='#000';
+  let s=seed;const rnd=()=>{s=(s*9301+49297)%233280;return s/233280};
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++)if(rnd()>.52)x.fillRect(i,j,1,1);
+  const finder=(a,b)=>{x.fillStyle='#fff';x.fillRect(a-1,b-1,9,9);x.fillStyle='#000';x.fillRect(a,b,7,7);x.fillStyle='#fff';x.fillRect(a+1,b+1,5,5);x.fillStyle='#000';x.fillRect(a+2,b+2,3,3)};
+  finder(0,0);finder(N-7,0);finder(0,N-7);
+}
+
+/* =========================================================
+   STORY
+   ========================================================= */
+async function phoneCallNenek({success}){
+  screen(homeHTML(),true); mission('Ketuk aplikasi <b>Telepon</b>.');
+  await tap('#aPhone'); mission();
+  screen(contactsHTML()); mission('Pilih kontak <b>Nenek</b>.');
+  await tap('#cNenek'); mission();
+  screen(callHTML('Memanggil…'),true);
+  await wait(1300);
+  if(!success){
+    sfx.fail(); await wait(1100);
+    $('#callst').textContent='Panggilan gagal';
+    $('#callerr').innerHTML='<div class="err">⚠️ Tidak ada layanan seluler.<br>Panggilan tidak dapat dilakukan.</div>';
+    await wait(900);
+  } else {
+    sfx.ring(); await wait(1800); $('#callst').textContent='Berdering…'; sfx.ring(); await wait(2600);
+    $('#callst').textContent='Terhubung · 00:01';
+  }
+}
+
+async function story(){
+  /* ---------- PROLOG: ruang tamu ---------- */
+  sig='wifi'; clock='10:00'; playBgm('rumah');
+  await setBg('ruangtamu'); setLoc('Medan Marelan · Senin, 2 November 2026 · 10.00 WIB');
+  $('#hud').classList.remove('hidden');
+  await narr('Medan Marelan, Senin, 2 November 2026, pukul 10.00 WIB. Rezik sedang bersantai di ruang tamu.');
+  await say('Rezik','Sudah sebulan aku tidak dapat kabar dari Nenek. Coba kutelepon, ah.');
+  hideDialog(); phoneOpen();
+  await phoneCallNenek({success:false});
+  await say('Rezik','Lho, kok tidak bisa, ya? Hmm…');
+  await say('Rezik','Oh iya! HP yang dibeli di luar negeri kan harus didaftarkan IMEI-nya ke Bea Cukai. Waktu di bandara kemarin aku lupa mendaftarkannya.');
+  await say('Rezik','Sebaiknya kubaca dulu ketentuan dan persyaratannya, supaya nanti tidak bolak-balik.');
+  hideDialog();
+
+  /* ---------- cari di Gigil ---------- */
+  screen(homeHTML(),true); mission('Ketuk aplikasi <b>Gigil</b> untuk mencari informasi.');
+  await tap('#aGigil'); mission();
+  screen(gigilHTML());
+  await wait(400); await typeInto($('#gq'),'Ketentuan dan persyaratan IMEI',60); await wait(500);
+  $('#gres').innerHTML=`
+    <div class="res"><div class="u">https://www.beacukai.go.id/faq-impor-registrasi-imei</div><button class="t" id="r1">FAQ Impor & Registrasi IMEI — Bea Cukai</button><div class="d">Tanya jawab seputar ketentuan, tarif, batas waktu, dan cara pendaftaran IMEI perangkat dari luar negeri.</div></div>
+    <div class="res"><div class="u">https://www.beacukai.go.id/register-imei.html</div><div class="t" style="color:#5b5b8a">Formulir Pendaftaran IMEI</div><div class="d">Formulir pendaftaran IMEI untuk penumpang dari luar negeri.</div></div>
+    <div class="res"><div class="u">https://forum-hp.contoh/imei-tips</div><div class="t" style="color:#5b5b8a">Tips IMEI dari forum (belum tentu benar)</div><div class="d">Kumpulan pengalaman pengguna…</div></div>`;
+  mission('Buka tautan resmi <b>beacukai.go.id</b> paling atas.');
+  await tap('#r1'); mission();
+  await wait(300);
+  $('#btnFaq').classList.remove('hidden');
+  mission('Baca ketentuannya (boleh semua atau sebagian), lalu tekan <b>✓ Selesai Lihat</b>.');
+  await openFAQ(); mission();
+  $('#btnFaq').classList.add('glow'); setTimeout(()=>$('#btnFaq').classList.remove('glow'),6000);
+  await narr('Tombol 📋 Ketentuan IMEI di pojok kanan atas bisa dibuka lagi kapan saja selama permainan.');
+  await say('Rezik','Sebenarnya bisa saja telepon lewat internet, tapi HP Nenek masih HP jadul, tidak bisa internet.');
+  await say('Rezik','Ya sudah, aku cari dulu kantor Bea Cukai terdekat.');
+  hideDialog();
+
+  /* ---------- Petaku ---------- */
+  screen(homeHTML(),true); mission('Ketuk aplikasi <b>Petaku</b>.');
+  await tap('#aMaps'); mission();
+  screen(`<div style="padding:1.4cqw"><div class="sbox"><span>🔍</span><span class="q" id="mq"></span><span class="caret"></span></div></div>
+    <div class="map"><svg viewBox="0 0 300 200"><rect width="300" height="200" fill="#e9efe4"/>
+    <path d="M0 140 L300 120" stroke="#fff" stroke-width="10"/><path d="M60 0 L90 200" stroke="#fff" stroke-width="8"/><path d="M180 0 L210 200" stroke="#fff" stroke-width="8"/><path d="M0 60 L300 40" stroke="#fff" stroke-width="6"/>
+    <rect x="230" y="150" width="70" height="50" fill="#cfe3f7"/><text x="238" y="180" font-size="10" fill="#4a77a8">Belawan</text>
+    <g id="mroute" opacity="0"><path d="M70 150 L95 132 L190 120 L205 60 L240 52" stroke="#1a73e8" stroke-width="5" fill="none" stroke-dasharray="2 0"/>
+    <circle cx="240" cy="52" r="9" fill="#e53935"/><text x="232" y="56" font-size="10" fill="#fff">🏛</text></g>
+    <circle cx="70" cy="150" r="7" fill="#1a73e8" stroke="#fff" stroke-width="3"/></svg></div><div id="mres"></div>`);
+  await wait(400); await typeInto($('#mq'),'Kantor Bea Cukai terdekat',60); await wait(500);
+  $('#mres').innerHTML=`<button class="mapres" id="mBelawan"><div class="n">KPPBC TMP Belawan</div><div class="m"><span class="star">★★★★★</span> · Kantor pemerintah · Jalan Anggada II, Belawan I, Medan Belawan, Kota Medan, Sumatera Utara 20411</div><div class="m">🚌 Ada rute bus · Buka · 07.30–17.00</div></button>
+    <div class="mapres" style="opacity:.6"><div class="n">Kantor Bea Cukai lainnya</div><div class="m">Lebih jauh dari lokasi Anda</div></div>`;
+  $('#mroute').setAttribute('opacity','1');
+  mission('Pilih hasil paling atas: <b>KPPBC TMP Belawan</b>.');
+  await tap('#mBelawan'); mission();
+  $('#mres').innerHTML=`<div class="route"><div class="big">🚌 Bus + 🚶 jalan kaki</div>Turun di halte terdekat kantor, lalu jalan kaki:<ol>${ROUTE.slice(0,5).map(s=>`<li>${s}</li>`).join('')}</ol></div>`;
+  await say('Rezik','Nah, ada KPPBC TMP Belawan. Tidak terlalu jauh dari Marelan, dan ada rute bus ke sana. Siang ini aku ke sana, ah.');
+  hideDialog(); await phoneClose();
+
+  /* ---------- PERJALANAN ---------- */
+  playBgm('perjalanan');
+  await blackText('Siang harinya, Rezik naik bus menuju Belawan…',2200);
+  sig='none'; clock='13:05';
+  await setBg('s1'); setLoc('Halte bus · dekat Bea Cukai Belawan'); await blackOff();
+  await say('Rezik','Sudah sampai di halte. Menurut peta, kantornya sudah dekat. Aku jalan kaki saja.');
+  routeStep=0; renderRoute(); $('#btnMap').classList.remove('hidden'); $('#mapPanel').classList.remove('hidden');
+  await narr('Petunjuk: pilih arah yang sesuai dengan rute di peta. Kalau salah, Rezik akan menyadarinya. Tombol 🗺️ Peta bisa dibuka atau ditutup kapan saja.');
+
+  const step = async (bg,loc)=>{routeStep++;renderRoute();await setBg(bg);if(loc)setLoc(loc)};
+  await nav({correct:'right'}); await step('s2','Jalan menuju Bea Cukai Belawan');
+  await nav({correct:'forward'}); await step('s3');
+  await nav({correct:'forward'}); await step('s4');
+  await nav({correct:'right',options:['left','forward','right']}); await step('s5','Depan kantor KPPBC TMP Belawan');
+  await say('Rezik','Oh, ini dia kantornya. Jalan sedikit lagi.');
+  await nav({correct:'forward'});
+  await step('s6','Gerbang KPPBC TMP Belawan');
+  await say('Rezik','Ada pos petugas keamanan. Coba kutanya dulu petugas di sana.');
+  await nav({correct:'pos',options:['left','forward'],wrong:'Sebaiknya aku bertanya dulu ke petugas di pos keamanan.',
+    hotspots:[{id:'pos',x:56,y:42,w:22,h:22,label:'🛡️ Pos Keamanan'}],missionText:'Datangi <b>pos keamanan</b> untuk bertanya.',steps:false});
+  routeStep++; renderRoute(); $('#mapPanel').classList.add('hidden');
+  await setBg('s7'); setLoc('Pos Keamanan');
+
+  /* ---------- Makarov ---------- */
+  await say('Makarov','Selamat siang, Pak. Ada yang bisa dibantu?',{sprite:'makarov_tanya'});
+  await say('Rezik','Saya mau mendaftarkan IMEI, Pak.');
+  await say('Makarov','Untuk pendaftaran IMEI, Bapak bisa putar arah ke sana, lalu masuk ke Gedung Kusuma, ya.',{sprite:'makarov_arah'});
+  await say('Rezik','Baik, Pak. Terima kasih, ya.');
+  await say('Makarov','Dengan senang hati, Pak.',{sprite:'makarov_senang'});
+  showSprite(null);
+  await nav({correct:'back',options:['left','forward','right','back'],wrong:'Kata petugas tadi, aku harus putar arah ke Gedung Kusuma.',missionText:'Ikuti arahan petugas: <b>putar arah</b>.',steps:false});
+  await playVideo('assets/video/video2.mp4','Rezik putar arah menuju Gedung Kusuma','s8');
+  routeStep++; renderRoute(); await setBg('s8'); setLoc('Menuju Gedung Kusuma');
+  await nav({correct:'forward'});
+  routeStep++; renderRoute(); await setBg('s8a'); setLoc('Gedung Kusuma');
+  await say('Rezik','Ini pintu masuk Gedung Kusuma. Baiklah, ayo masuk.');
+  await nav({correct:'enter',options:['left','enter','right'],wrong:'Pintu masuknya ada di depanku.',missionText:'Masuk ke Gedung Kusuma.'});
+  routeStep=ROUTE.length; renderRoute(); $('#btnMap').classList.add('hidden'); $('#mapPanel').classList.add('hidden');
+
+  /* ---------- Simon ---------- */
+  playBgm('kantor');
+  await setBg('s9'); setLoc('Gedung Kusuma · Ruang Pelayanan dan Informasi');
+  await say('Simon','Selamat siang, Pak. Ada yang bisa saya bantu?',{sprite:'simon_salam'});
+  await say('Rezik','Saya mau mendaftarkan IMEI, Pak.');
+  await say('Simon','Silakan ambil nomor antrean Layanan Informasi di mesin antrean sebelah sana, ya, Pak.',{sprite:'simon_arah'});
+  await say('Rezik','Baik, terima kasih, Pak!');
+  await say('Simon','Dengan senang hati, Pak.',{sprite:'simon_salam'});
+  showSprite(null);
+  await hotspots([{id:'mon',x:0,y:49,w:8,h:24,label:'Mesin antrean',ok:true},
+                  {id:'cs',x:25,y:60,w:50,h:40,quiet:true,wrong:'Kata Pak Simon, aku harus ambil antrean dulu di monitor biru sebelah kiri.'}],
+                 'Klik <b>monitor antrean biru</b> di sebelah kiri.','Mesin antreannya ada di sebelah kiri.');
+  await playVideo('assets/video/video3.mp4','Rezik berjalan ke mesin antrean','s10');
+
+  /* ---------- mesin antrean ---------- */
+  await setBg('s10'); setLoc('Mesin antrean');
+  const wrongSvc='Bukan ini layanan yang saya butuhkan.';
+  const B=(id,x,y,w,h,ok)=>({id,x,y,w,h,ok,quiet:true,wrong:wrongSvc});
+  await hotspots([B('info',28,43,24,4.8,true),B('pib',53,43,24,4.8),B('unk',28,48.5,24,4.8),B('surat',53,49,24,4.8),B('lain',28,54,24,6.4),B('dnp',53,55,24,5),
+                  B('manifest',28,61,24,4.6),B('bendahara',53,61.5,24,4.6),B('ska',28,66.6,24,4.8),B('pfpd',53,67,24,4.8)],
+                 'Pilih menu layanan yang tepat untuk registrasi IMEI.',wrongSvc);
+  sfx.kiosk(); setTimeout(()=>sfx.printer(),350);
+  await setBg('s11');
+  await hotspots([{id:'tk',x:40,y:42,w:26,h:22,label:'Ambil kertas antrean',ok:true}],'Ambil <b>kertas antrean</b> yang keluar dari mesin.');
+  sfx.paper();
+  await modalHTML(`<div class="ticket"><div class="k">BEA CUKAI BELAWAN</div><div class="k">Layanan Informasi</div><div class="n">${QUEUE_NO}</div><div class="s">Senin, 02-11-2026 · 13:21</div></div>`,'Simpan kertas antrean');
+  await say('Rezik','Sudah dapat nomor antrean. Tinggal tunggu dipanggil.');
+  hideDialog();
+  await blackText('Beberapa saat kemudian…',1600);
+  await setBg('s12'); setLoc('Loket Layanan Informasi'); await blackOff();
+  sfx.ding(); await wait(900);
+  await narr(`🔔 “Nomor antrean ${QUEUE_NO}, silakan menuju loket ${LOKET}.”`);
+  await hotspots([{id:'l7',x:12,y:48,w:32,h:32,quiet:true,ok:true},{id:'l8',x:56,y:48,w:32,h:32,quiet:true,wrong:'Saya rasa, saya bisa membedakan angka 7 dan angka 8.'}],
+                 `Menuju <b>loket ${LOKET}</b>.`);
+
+  /* ---------- Yola ---------- */
+  await say('Yola','Selamat siang, Pak. Ada yang bisa kami bantu?',{sprite:'yola_salam'});
+  await say('Rezik','Selamat siang, Kak. Saya mau mendaftarkan IMEI.');
+  await say('Yola','Baik, Pak. Apakah Bapak sudah tahu ketentuannya?',{sprite:'yola_jelas'});
+  const asked=new Set();
+  while(true){
+    const c=await choice('Jawab pertanyaan Yola',[{label:'Sudah tahu'},{label:'Saya ingin bertanya dulu'}]);
+    if(c===0){
+      const k=await choice('Yakin?',[{label:'Yakin, lanjut',cls:'warn'},{label:'Saya ingin bertanya dulu'}],
+        {text:'Memilih opsi ini berarti Anda sudah paham ketentuan registrasi IMEI. Kalau masih ragu, pilih “Saya ingin bertanya dulu”.'});
+      if(k===0) break;
+    }
+    // Q&A loop
+    let leave=false;
+    while(!leave){
+      const opts=QNA.map((x,i)=>({label:x.q,cls:asked.has(i)?'done':''})).concat([{label:'✓ Selesai bertanya',cls:'alt'}]);
+      const i=await choice('Pilih pertanyaan untuk Yola',opts);
+      if(i===QNA.length){leave=true;break}
+      asked.add(i);
+      await say('Rezik',QNA[i].q);
+      for(const a of QNA[i].a) await say('Yola',a,{sprite:'yola_jelas'});
+    }
+    break;
+  }
+
+  /* ---------- serah dokumen ---------- */
+  await say('Yola','Baik, Pak. Boleh saya lihat kelengkapan dokumennya?',{sprite:'yola_duduk'});
+  await docTray();
+  await say('Rezik','Ini, Kak.');
+  await say('Yola','Terima kasih. Apakah Bapak sudah mengisi formulir pendaftarannya?',{sprite:'yola_cek'});
+  await say('Rezik','Sepertinya belum, Kak.');
+  await say('Yola','Baiklah, mari saya bantu mengisinya.',{sprite:'yola_jelas'});
+
+  /* ---------- TUTORIAL FORM ---------- */
+  showSprite(null);
+  await narr('Mode tutorial: Yola memandu Rezik mengisi formulir lewat HP.');
+  sig='wifi'; clock='13:30'; phoneOpen(); screen(homeHTML(),true);
+  await say('Yola','Buka Gigil di HP Bapak, lalu cari “registrasi imei bea cukai”.');
+  hideDialog();
+  mission('Ketuk aplikasi <b>Gigil</b>.'); await tap('#aGigil'); mission();
+  screen(gigilHTML());
+  await wait(400); await typeInto($('#gq'),'registrasi imei bea cukai',60); await wait(500);
+  $('#gres').innerHTML=`
+    <div class="res"><div class="u">🏛️ Beacukai.go.id · https://www.beacukai.go.id › imei</div><button class="t" id="rImei">IMEI</button><div class="d">Informasi registrasi IMEI perangkat dari luar negeri: ketentuan, formulir, dan cek status.</div>
+      <div style="margin:1cqw 0 0 1.4cqw;border-left:.2cqw solid #e3e7ef;padding-left:1.2cqw">
+       <div class="t" style="color:#5b5b8a;font-size:1.5cqw">FAQ Registrasi IMEI</div><div class="d">Tanya jawab seputar registrasi IMEI…</div>
+       <div class="t" style="color:#5b5b8a;font-size:1.5cqw;margin-top:.8cqw">Registrasi IMEI</div><div class="d">Pendaftaran IMEI dilakukan dengan mengisi…</div></div></div>
+    <div class="res"><div class="u">https://blog-operator.contoh/daftar-imei</div><div class="t" style="color:#5b5b8a">Cara Daftar IMEI Online Tanpa ke Bea Cukai</div><div class="d">Artikel dari pihak lain…</div></div>
+    <div class="res"><div class="u">🏛️ Beacukai.go.id · https://www.beacukai.go.id</div><div class="t" style="color:#5b5b8a">Situs Resmi Direktorat Jenderal Bea dan Cukai</div><div class="d">Daftar kantor, layanan, impor, IMEI…</div></div>`;
+  mission('Pilih hasil <b>IMEI</b> dari Beacukai.go.id.'); await tap('#rImei'); mission();
+  screen(`<div class="urlbar"><span class="lock">🔒</span><span>beacukai.go.id/imei</span></div>
+    <div style="background:#fff;padding:1.2cqw 2cqw;display:flex;align-items:center;gap:1cqw;border-bottom:.1cqw solid #e3e7ef"><span style="font-size:2.6cqw">🏛️</span><div style="font-size:1.05cqw;font-weight:800;line-height:1.2;color:#1d2433">KEMENTERIAN KEUANGAN<br><span style="font-weight:500">DIREKTORAT JENDERAL BEA DAN CUKAI</span></div><span style="margin-left:auto;font-size:2cqw">☰</span></div>
+    <div style="background:linear-gradient(rgba(20,25,35,.72),rgba(20,25,35,.72)),linear-gradient(135deg,#55606e,#2d343e);color:#fff;text-align:center;padding:4cqw 2.4cqw 6cqw">
+      <div style="font-size:2.8cqw;font-weight:800;margin-bottom:1.4cqw">Registrasi IMEI</div>
+      <div style="font-size:1.3cqw;line-height:1.6">Sesuai dengan Per-13/BC/2021 jo. Per-7/BC/2023, handphone, komputer genggam, dan tablet (HKT) yang diperoleh dari luar negeri, baik dibawa penumpang maupun dikirim sebagai barang kiriman, wajib didaftarkan IMEI-nya agar mendapatkan jaringan seluler Indonesia.</div></div>
+    <div style="background:#fff;margin:-3cqw 1.6cqw 2cqw;border-radius:1.2cqw;box-shadow:0 .4cqw 1.4cqw rgba(0,0,0,.15);padding:1.8cqw">
+      <div style="font-size:1.6cqw;font-weight:700;margin-bottom:1.2cqw">Cek status IMEI Anda di sini!</div>
+      <button id="btnFormImei" style="width:100%;border:none;border-radius:.8cqw;padding:1.3cqw;font-size:1.35cqw;font-weight:700;color:#fff;background:linear-gradient(90deg,#f57c1f,#ecb10f)">↗ Formulir Pendaftaran dan Cek Status IMEI</button></div>`);
+  mission('Ketuk <b>Formulir Pendaftaran dan Cek Status IMEI</b>.'); await tap('#btnFormImei'); mission();
+  await wait(400);
+  await formStep();
+
+  /* QR */
+  const token='RZK'+Math.random().toString(36).slice(2,8).toUpperCase();
+  screen(`<div class="qrpage"><div class="okic">✓</div><h4>Pendaftaran Berhasil Dikirim</h4><p>Tunjukkan QR code dan token ini kepada petugas Bea Cukai untuk penelitian lebih lanjut.</p><canvas id="qr"></canvas><div class="token">${token}</div></div>`);
+  drawQR($('#qr'),Date.now()%233280); sfx.chime();
+  await say('Rezik','Sudah, Kak. Ini QR code dan tokennya.');
+  await phoneClose(); hideDialog();
+  await say('Yola','Formulir sudah terisi dan dokumennya juga lengkap. Saya panggilkan pemeriksa dokumen untuk penelitian lebih lanjut, ya, Pak.',{sprite:'yola_jelas'});
+  await say('Rezik','Baik, Kak.');
+  showSprite(null); hideDialog();
+  await blackText('Dua menit kemudian…',1400); await blackOff();
+
+  /* ---------- Aulia ---------- */
+  const isUSD=FORMDATA.cur==='USD';
+  const nilai=isUSD?FORMDATA.value*KURS:FORMDATA.value, bm=nilai*.10, ni=nilai+bm, ppn=ni*11/12*.12, total=bm+ppn;
+  const hargaTxt=isUSD?fmtUSD(FORMDATA.value):rp(FORMDATA.value);
+  await say('Aulia','Selamat siang, Pak Rezik. Bapak ingin meregistrasi IMEI?',{sprite:'aulia_sapa'});
+  await say('Rezik','Betul, Bu.');
+  await say('Aulia','Saya periksa kelengkapan dokumennya dulu, ya, Pak.',{sprite:'aulia_periksa'});
+  await say('Rezik','Baik, silakan, Bu.');
+  await say('Aulia',`Menurut formulir yang Bapak isi, harga HP-nya ${hargaTxt}. Apakah benar?`,{sprite:'aulia_periksa'});
+  if(isUSD){
+    await say('Rezik','Betul, Bu.');
+    await say('Aulia',`Kurs hari ini adalah ${rp(KURS)} per USD ya, Pak. (Kurs ini hanya contoh.) Jadi kalau dirupiahkan, harga HP Bapak ${rp(nilai)}.`,{sprite:'aulia_sapa'});
+  } else {
+    await say('Rezik','Betul, Bu.');
+  }
+  await say('Aulia','Baik. Berdasarkan formulir dan invoice yang Bapak lampirkan, ini perhitungan pungutannya.',{sprite:'aulia_sapa'});
+  setTimeout(()=>sfx.stamp(),250);
+  await modalHTML(`<div class="bill"><h3>BILLING DJBC</h3><div class="sub">Kode Billing: 8202611${String(Math.floor(Math.random()*1e8)).padStart(8,'0')} · Atas nama: REZIK</div>
+    <table>
+    <tr><td>Harga barang<div class="f">${isUSD?`${fmtUSD(FORMDATA.value)} × kurs ${rp(KURS)} (contoh)`:'sesuai formulir (Rupiah)'}</div></td><td class="r">${rp(nilai)}</td></tr>
+    <tr><td>Bea Masuk (BM)<div class="f">10% × harga barang</div></td><td class="r">${rp(bm)}</td></tr>
+    <tr><td>Nilai impor<div class="f">harga barang + BM</div></td><td class="r">${rp(ni)}</td></tr>
+    <tr><td>PPN<div class="f">11/12 × 12% × nilai impor</div></td><td class="r">${rp(ppn)}</td></tr>
+    <tr class="tot"><td>Total yang dibayar (BM + PPN)</td><td class="r">${rp(total)}</td></tr></table>
+    <div class="note">⚠️ Ini simulasi. Kurs dan harga hanya contoh. Penetapan nilai barang sepenuhnya oleh petugas, berdasarkan kelengkapan dokumen pendukung.</div></div>`,'Mengerti');
+  await say('Rezik','Baik, Bu. Pungutan ini bisa saya bayar di mana?');
+  await say('Aulia','Bisa di bank mana saja, Pak. Kalau perlu bantuan, silakan tanya customer service di bank tujuan.',{sprite:'aulia_sapa'});
+  await say('Rezik','Baik, Bu. Terima kasih!');
+  await say('Aulia','Sama-sama, Pak. Terima kasih sudah datang ke Bea Cukai Belawan.',{sprite:'aulia_salam'});
+  showSprite(null); hideDialog();
+
+  /* ---------- EPILOG ---------- */
+  playBgm(null);
+  await blackText('Rezik membayar pungutan di bank pada hari itu juga. Keesokan harinya…',3000);
+  playBgm('jenaka');
+  sig='4g'; clock='09:30';
+  await setBg('ruangtamu'); setLoc('Medan Marelan · Selasa, 3 November 2026'); await blackOff();
+  await say('Rezik','Coba aku telepon Nenek lagi…');
+  hideDialog(); phoneOpen();
+  await phoneCallNenek({success:true});
+  await say('Rezik','Wah, sudah berdering! HP-ku sudah bisa pakai jaringan seluler.',{think:true});
+  await say('Rezik','Halo, Nek! Ini Rezik! Apa kabar?');
+  await say('Nenek','Rezik… Rezik… Rezik… Nenek lupa. Kamu siapa, ya?');
+  setTimeout(()=>sfx.wahwah(),300);
+  await say('Rezik','Waduuuuuh…');
+  hideDialog(); await phoneClose(); setLoc();
+  sfx.fanfare(); showEnd(asked.size);
+}
+
+/* ---------- document tray mini-mission ---------- */
+function docTray(){
+  return new Promise(res=>{
+    hideDialog();
+    const items=[['paspor','🛂','Paspor',1],['bp','🎫','Boarding pass',1],['hp','📱','HP yang didaftarkan',1],['inv','🧾','Invoice',1],
+                 ['kunci','🔑','Kunci motor',0],['dompet','👛','Dompet',0],['payung','☂️','Payung',0],['snack','🍫','Cokelat',0]];
+    const box=$('#mbox');
+    box.innerHTML=`<h3>Serahkan dokumen yang diperlukan</h3><p>Pilih semua barang yang dibutuhkan untuk registrasi IMEI, lalu tekan Serahkan.</p><div class="tray">${items.map(([id,e,l])=>`<button class="item" data-id="${id}"><span class="e">${e}</span>${l}</button>`).join('')}</div>`;
+    const go=document.createElement('button');go.className='opt alt';go.textContent='Serahkan ke Yola';box.appendChild(go);
+    box.querySelectorAll('.item').forEach(b=>b.onclick=()=>{const it=items.find(x=>x[0]===b.dataset.id);
+      if(!it[3]){b.classList.remove('no');void b.offsetWidth;b.classList.add('no');toast(`${it[2]} tidak diperlukan untuk registrasi IMEI.`);return}
+      sfx.tap();b.classList.toggle('sel')});
+    go.onclick=()=>{const need=items.filter(x=>x[3]).map(x=>x[0]);const sel=[...box.querySelectorAll('.item.sel')].map(b=>b.dataset.id);
+      const miss=need.filter(n=>!sel.includes(n));
+      if(miss.length){toast('Sepertinya masih ada dokumen yang kurang. Cek lagi di 📋 Ketentuan IMEI.');return}
+      sfx.paper();$('#modal').classList.add('hidden');res()};
+    $('#modal').classList.remove('hidden');
+  });
+}
+
+/* ---------- end screen ---------- */
+function showEnd(n){
+  const e=$('#end');
+  e.innerHTML=`<div class="eptag">EPISODE 3 · TAMAT</div><h1>Misi Selesai! 🎉</h1>
+  <div class="recap"><h3>Yang kamu pelajari</h3><ul>
+   <li>HP dari luar negeri wajib didaftarkan IMEI-nya agar bisa memakai jaringan seluler Indonesia.</li>
+   <li>Lupa mendaftar di bandara? Masih bisa di <b>kantor Bea Cukai terdekat</b>, paling lambat <b>60 hari</b> sejak kedatangan, tetapi <b>tanpa pembebasan USD 500</b>.</li>
+   <li>Siapkan paspor, boarding pass, HP, invoice (jika ada), dan isi formulir pendaftaran IMEI. Nomor IMEI dicek dengan <b>*#06#</b>.</li>
+   <li>Pendaftaran gratis. Pungutannya: Bea Masuk 10% dan PPN 11/12 × 12% dari nilai impor. Bayar di bank mana saja.</li>
+   <li>IMEI aktif paling lambat 2×24 jam setelah pembayaran. Kendala? Hubungi Bravo Bea Cukai 1500225.</li>
+  </ul></div>
+  <button class="bigbtn" onclick="location.reload()">↻ Main lagi</button>
+  <div class="disc">Kamu mengajukan ${n} dari ${QNA.length} pertanyaan ke Yola. Game ini adalah simulasi edukasi dari Seksi Layanan Informasi KPPBC TMP Belawan. Untuk ketentuan resmi, kunjungi beacukai.go.id.</div>`;
+  e.classList.remove('hidden');
+}
+
+/* =========================================================
+   BOOT
+   ========================================================= */
+buildFAQ();
+['ruangtamu','s1','s2','s3','s4','s5','s6','s7','s8','s8a','s9','s10','s11','s12'].forEach(n=>{const i=new Image();i.src='assets/bg/'+n+'.jpg'});
+['makarov_tanya','makarov_arah','makarov_senang','simon_salam','simon_arah','yola_salam','yola_jelas','yola_duduk','yola_cek','aulia_sapa','aulia_periksa','aulia_salam'].forEach(n=>{const i=new Image();i.src='assets/char/'+n+'.webp?v='+ASSET_V});
+if(matchMedia('(orientation:portrait) and (max-width:820px)').matches) $('#rotate').classList.add('show');
+$('#btnStart').onclick=()=>{ac();sfx.ok();$('#title').classList.add('hidden');story().catch(e=>{console.error(e);toast('Terjadi kesalahan: '+e.message+'. Silakan muat ulang halaman.','')})};
+</script>
+</body>
+</html>
